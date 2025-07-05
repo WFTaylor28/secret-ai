@@ -2,7 +2,7 @@
   "name": "ai-character-chat",
   "version": "1.0.0",
   "description": "AI Character Chat App",
-  "homepage": "https://<your-username>.github.io/ai-character-chat",
+  "homepage": "https://WFTaylor28.github.io/ai-character-chat",
   "private": true,
   "scripts": {
     "start": "react-scripts start",
