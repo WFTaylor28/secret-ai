@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>My Chats</title>
+  <title>Chat with AI</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -12,22 +12,78 @@
     <div class="logo">AI Roleplay Hub</div>
     <nav>
       <a href="index.html">Home</a>
-      <a href="character.html">Create Character</a>
-      <a href="#">Chats</a>
     </nav>
   </header>
 
   <section class="section">
-    <h2>Your Chats</h2>
-    <div id="chat-list" class="chat-list">
-      <div class="chat-item">
-        <strong>Luna</strong> - Last message: "Hi there!"
-      </div>
-      <div class="chat-item">
-        <strong>Neo</strong> - Last message: "Tell me about yourself."
-      </div>
-    </div>
+    <h2>Chat with Luna</h2>
+    <div id="chat-box" class="chat-box"></div>
+    <form id="chatForm">
+      <input type="text" id="userInput" placeholder="Type your message..." required />
+      <button type="submit" class="btn">Send</button>
+    </form>
   </section>
+
+  <script>
+    const chatBox = document.getElementById('chat-box');
+    const form = document.getElementById('chatForm');
+    const input = document.getElementById('userInput');
+
+    // Load character from localStorage
+    const character = JSON.parse(localStorage.getItem('aiCharacter')) || {
+      name: 'Luna',
+      personality: 'Friendly and curious',
+      backstory: 'An AI created to explore human emotions.'
+    };
+
+    // Simulated chat history
+    let chatHistory = [];
+
+    function displayMessage(role, text) {
+      const msg = document.createElement('div');
+      msg.className = `message ${role}`;
+      msg.textContent = text;
+      chatBox.appendChild(msg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function sendToAI(message) {
+      const prompt = `
+You are ${character.name}, a character with the following traits:
+- Personality: ${character.personality}
+- Backstory: ${character.backstory}
+
+Respond naturally as this character.
+User: ${message}
+${character.name}:`;
+
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt })
+        });
+
+        const data = await response.json();
+        return data.reply;
+      } catch (err) {
+        console.error(err);
+        return "Error communicating with AI.";
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const userMsg = input.value;
+      if (!userMsg) return;
+
+      displayMessage('user', userMsg);
+      input.value = '';
+
+      const reply = await sendToAI(userMsg);
+      displayMessage('bot', reply);
+    });
+  </script>
 
 </body>
 </html>
