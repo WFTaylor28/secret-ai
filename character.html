@@ -7,10 +7,11 @@
 </head>
 <body>
 
+  <!-- Header -->
   <header>
     <div class="logo">AI Roleplay Hub</div>
     <nav>
-      <a href="index.html">Back</a>
+      <a href="index.html">Home</a>
     </nav>
   </header>
 
@@ -18,23 +19,38 @@
     <h2>Create Your AI Character</h2>
     <form id="characterForm">
       <label>Name:</label>
-      <input type="text" required />
+      <input type="text" id="charName" required />
 
       <label>Personality:</label>
-      <textarea placeholder="Friendly, sarcastic, mysterious..."></textarea>
+      <textarea id="charPersonality" placeholder="Friendly, sarcastic, mysterious..."></textarea>
 
       <label>Backstory:</label>
-      <textarea placeholder="Tell us about their origin story..."></textarea>
+      <textarea id="charBackstory" placeholder="Tell us about their origin story..."></textarea>
 
       <label>Appearance:</label>
-      <textarea placeholder="Describe how they look..."></textarea>
+      <textarea id="charAppearance" placeholder="Describe how they look..."></textarea>
 
       <label>Special Traits:</label>
-      <input type="text" placeholder="comma-separated list" />
+      <input type="text" id="charTraits" placeholder="comma-separated list" />
 
       <button type="submit" class="btn">Save Character</button>
     </form>
   </section>
+
+  <script>
+    document.getElementById('characterForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const character = {
+        name: document.getElementById('charName').value,
+        personality: document.getElementById('charPersonality').value,
+        backstory: document.getElementById('charBackstory').value,
+        appearance: document.getElementById('charAppearance').value,
+        traits: document.getElementById('charTraits').value.split(',').map(t => t.trim())
+      };
+      localStorage.setItem('aiCharacter', JSON.stringify(character));
+      alert("Character saved!");
+    });
+  </script>
 
 </body>
 </html>
