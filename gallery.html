@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Character Gallery - AI Roleplay Hub</title>
+  <script src="https://cdn.tailwindcss.com "></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .dark {
+      background-color: #1a202c;
+      color: #e2e8f0;
+    }
+    .light {
+      background-color: #f7f9fc;
+      color: #333;
+    }
+  </style>
+</head>
+<body class="light">
+
+  <!-- Header -->
+  <header class="bg-blue-600 text-white p-4 shadow-md">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-xl font-bold">AI Roleplay Hub</h1>
+      <nav class="space-x-4">
+        <button onclick="toggleTheme()" class="px-3 py-1 rounded hover:bg-blue-500 transition">Toggle Theme</button>
+        <a href="character.html" class="hover:underline">Create Character</a>
+        <a href="#" class="hover:underline">Gallery</a>
+        <a href="#" class="hover:underline">Chats</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Character Gallery -->
+  <section id="gallery" class="py-16">
+    <div class="container mx-auto px-4">
+      <h2 class="text-3xl font-semibold mb-8 text-center">Explore Characters</h2>
+
+      <!-- Filters -->
+      <div class="mb-6 flex justify-between items-center">
+        <div class="flex space-x-4">
+          <button class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Popular</button>
+          <button class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-lg">Trending</button>
+          <button class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-lg">Female</button>
+          <button class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-lg">Male</button>
+          <button class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-lg">Anime</button>
+          <button class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-lg">Game</button>
+        </div>
+        <label class="flex items-center">
+          <input type="checkbox" id="nsfwFilter" class="mr-2">
+          <span>NSFW</span>
+        </label>
+      </div>
+
+      <!-- Character Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <!-- Sample Character Card -->
+        <div class="bg-white dark:bg-gray-700 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition">
+          <img src="https://source.unsplash.com/400x300/?ai,robot" alt="Character Avatar" class="w-full h-40 object-cover">
+          <div class="p-4">
+            <h3 class="font-bold text-lg">Luna</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-300 truncate">A curious AI who loves science fiction and space exploration.</p>
+            <div class="mt-2 flex justify-between items-center">
+              <span class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">Sci-Fi</span>
+              <button class="text-sm text-blue-600 dark:text-blue-400 hover:underline">View Profile</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- More Cards -->
+        <div class="bg-white dark:bg-gray-700 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition">
+          <img src=" https://source.unsplash.com/400x300/?fantasy,dragon" alt="Character Avatar" class="w-full h-40 object-cover">
+          <div class="p-4">
+            <h3 class="font-bold text-lg">Aelarion</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-300 truncate">An elven mage from a forgotten realm of magic and mystery.</p>
+            <div class="mt-2 flex justify-between items-center">
+              <span class="text-xs bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-2 py-1 rounded">Fantasy</span>
+              <button class="text-sm text-blue-600 dark:text-blue-400 hover:underline">View Profile</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add more cards here -->
+      </div>
+
+      <!-- Pagination -->
+      <div class="mt-8 flex justify-center">
+        <button class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-lg">Previous</button>
+        <button class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white ml-2 rounded-lg">Next</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-blue-600 text-white p-4 text-center">
+    <p>&copy; 2025 AI Roleplay Hub. All rights reserved.</p>
+  </footer>
+
+  <!-- Dark Mode Toggle Script -->
+  <script>
+    function toggleTheme() {
+      document.body.classList.toggle('dark');
+      document.body.classList.toggle('light');
+    }
+  </script>
+
+</body>
+</html>
