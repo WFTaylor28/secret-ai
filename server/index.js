@@ -1,14 +1,17 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 const { Configuration, OpenAIApi } = require("openai");
 
-// Initialize Express app
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from client folder (React app)
+app.use(express.static(path.resolve(__dirname, "../client")));
 
 // OpenAI Setup
 const configuration = new Configuration({
@@ -43,6 +46,11 @@ app.post("/chat", async (req, res) => {
     res.status(500).json({ error: "Failed to get AI response" });
   }
 });
+
+// All other GET requests not handled before will go to React app
+app.get("*", (req, res) =>
+  res.sendFile(path.resolve(__dirname, "../client", "index.html"))
+);
 
 // Start server
 const PORT = process.env.PORT || 5000;
