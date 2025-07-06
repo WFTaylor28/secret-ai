@@ -55,6 +55,7 @@ const App = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState("");
+  const [pendingAI, setPendingAI] = useState(null); // For animating AI reply
 
   // Handle input changes in character form
   const handleInputChange = (e) => {
@@ -104,22 +105,54 @@ const App = () => {
     setInputMessage("");
     setIsTyping(true);
     setError("");
+    setPendingAI(null);
 
     try {
-      // Call backend API instead of mock
-      const response = await fetch("/chat", {
+      const isLocal =
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1";
+      const BACKEND_URL = isLocal
+        ? "/chat"
+        : "https://secret-ai-uz8m.onrender.com/chat";
+
+      // Show ... bubble while waiting
+      setPendingAI({ text: "", isUser: false, thinking: true });
+
+      const response = await fetch(BACKEND_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMessage.text, character: activeCharacter }),
       });
       if (!response.ok) throw new Error("API error");
       const data = await response.json();
-      setMessages((prev) => [
-        ...prev,
-        { text: data.reply, isUser: false },
-      ]);
+
+      // Defensive: check for valid reply
+      const fullText = (data && typeof data.reply === "string") ? data.reply.trim() : "";
+      if (!fullText) {
+        setError("AI did not return a response. Please try again.");
+        setPendingAI(null);
+        return;
+      }
+
+      // Animate AI reply letter by letter
+      let i = 0;
+      setPendingAI({ text: "", isUser: false, thinking: false });
+      const typeWriter = () => {
+        setPendingAI({ text: fullText.slice(0, i + 1), isUser: false, thinking: false });
+        if (i < fullText.length - 1) {
+          i++;
+          setTimeout(typeWriter, 18); // typing speed
+        } else {
+          setMessages((prev) => [...prev, { text: fullText, isUser: false }]);
+          setPendingAI(null);
+        }
+      };
+      if (fullText.length > 0) {
+        setTimeout(typeWriter, 400); // short pause after ...
+      }
     } catch (err) {
       setError("Failed to get a response from AI. Please try again.");
+      setPendingAI(null);
     } finally {
       setIsTyping(false);
     }
@@ -523,7 +556,8 @@ const App = () => {
                           )}
                         </div>
                       ))}
-                      {isTyping && (
+                      {/* AI is typing bubble ("..."), only if not animating reply */}
+                      {isTyping && pendingAI && pendingAI.thinking && (
                         <div className="flex items-start space-x-3">
                           <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
                             A
@@ -534,6 +568,17 @@ const App = () => {
                               <span>.</span>
                               <span>.</span>
                             </span>
+                          </div>
+                        </div>
+                      )}
+                      {/* AI typewriter bubble */}
+                      {pendingAI && !pendingAI.thinking && (
+                        <div className="flex items-start space-x-3">
+                          <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
+                            A
+                          </div>
+                          <div className="bg-gray-700 p-3 rounded-lg max-w-md flex items-center">
+                            <span className="typewriter">{pendingAI.text}</span>
                           </div>
                         </div>
                       )}
