@@ -84,7 +84,6 @@ const App = () => {
       ...newCharacter,
       id: Date.now(),
     };
-    console.log("Creating character:", createdCharacter);
     alert(`Character "${createdCharacter.name}" created successfully!`);
     setNewCharacter({
       name: "",
@@ -156,6 +155,28 @@ const App = () => {
     } finally {
       setIsTyping(false);
     }
+  };
+
+  // More realistic mock AI response generator
+  const getMockAIResponse = (message) => {
+    const personality = activeCharacter?.description.toLowerCase() || "";
+    let basePrompt = `You are ${activeCharacter?.name}, ${personality}. The user said: "${message}". Respond naturally.`;
+
+    if (activeCharacter.nsfw) {
+      basePrompt += " You can be bold and expressive.";
+    } else {
+      basePrompt += " Keep your tone friendly and appropriate.";
+    }
+
+    const aiResponses = [
+      `${activeCharacter.name}: That's an interesting question.`,
+      `${activeCharacter.name}: Let me think about how to respond...`,
+      `${activeCharacter.name}: I'd love to explore that topic with you.`,
+      `${activeCharacter.name}: Can you tell me more?`,
+      `${activeCharacter.name}: Fascinating!`,
+    ];
+
+    return aiResponses[Math.floor(Math.random() * aiResponses.length)];
   };
 
   // Filtered characters based on tab
@@ -320,10 +341,8 @@ const App = () => {
                     </div>
                   ))
                 ) : (
-                  <div className="col-span-full text-center py-8 bg-gray-800 rounded-lg">
-                    <p className="text-gray-400">
-                      You don't have any public characters yet.
-                    </p>
+                  <div className="col-span-full text-center py-8 bg-gray-900 rounded-lg">
+                    <p className="text-gray-400">You don't have any public characters yet.</p>
                   </div>
                 )}
               </div>
@@ -370,38 +389,32 @@ const App = () => {
                     </div>
                   ))
                 ) : (
-                  <div className="col-span-full text-center py-8 bg-gray-800 rounded-lg">
-                    <p className="text-gray-400">
-                      You don't have any private characters yet.
-                    </p>
+                  <div className="col-span-full text-center py-8 bg-gray-900 rounded-lg">
+                    <p className="text-gray-400">You don't have any private characters yet.</p>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Character Creation Form */}
-            <div className="mt-12 p-6 bg-gray-800 rounded-xl shadow-lg">
+            <div className="mt-12 p-6 bg-gray-900 rounded-xl shadow-lg">
               <h3 className="text-2xl font-bold mb-4">Create New Character</h3>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Character Name
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Character Name</label>
                   <input
                     type="text"
                     name="name"
                     value={newCharacter.name}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                     placeholder="Enter character name"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Character Image
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Character Image</label>
                   <div className="flex items-center space-x-4">
                     {newCharacter.image ? (
                       <img
@@ -410,10 +423,8 @@ const App = () => {
                         className="w-20 h-20 rounded object-cover"
                       />
                     ) : (
-                      <div className="w-20 h-20 bg-gray-700 rounded flex items-center justify-center">
-                        <span className="text-gray-400 text-xs text-center">
-                          No image
-                        </span>
+                      <div className="w-20 h-20 bg-gray-800 rounded flex items-center justify-center">
+                        <span className="text-gray-400 text-xs text-center">No image</span>
                       </div>
                     )}
                     <input
@@ -426,16 +437,14 @@ const App = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Backstory / Description
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Backstory / Description</label>
                   <textarea
                     name="description"
                     value={newCharacter.description}
                     onChange={handleInputChange}
                     rows={3}
                     required
-                    className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                     placeholder="Describe your character..."
                   ></textarea>
                 </div>
@@ -489,10 +498,8 @@ const App = () => {
                     <div
                       key={character.id}
                       onClick={() => setActiveCharacter(character)}
-                      className={`bg-gray-800 p-3 rounded-lg flex items-center space-x-3 cursor-pointer transition-colors ${
-                        activeCharacter?.id === character.id
-                          ? "ring-2 ring-purple-500"
-                          : "hover:bg-gray-700"
+                      className={`bg-gray-900 p-3 rounded-lg flex items-center space-x-3 cursor-pointer transition-colors ${
+                        activeCharacter?.id === character.id ? "ring-2 ring-purple-500" : "hover:bg-gray-800"
                       }`}
                     >
                       <img
@@ -502,9 +509,7 @@ const App = () => {
                       />
                       <div>
                         <h4 className="font-medium">{character.name}</h4>
-                        <p className="text-xs text-gray-400 truncate">
-                          {character.description}
-                        </p>
+                        <p className="text-xs text-gray-400 truncate">{character.description}</p>
                       </div>
                     </div>
                   ))}
@@ -512,7 +517,7 @@ const App = () => {
               </div>
 
               {/* Chat Interface */}
-              <div className="lg:col-span-2 bg-gray-800 rounded-xl p-4 min-h-[400px] flex flex-col">
+              <div className="lg:col-span-2 bg-gray-900 rounded-xl p-4 min-h-[400px] flex flex-col">
                 {!activeCharacter ? (
                   <div className="flex-1 flex items-center justify-center text-gray-500">
                     Select a character to start chatting.
@@ -533,7 +538,9 @@ const App = () => {
                       {messages.map((msg, index) => (
                         <div
                           key={index}
-                          className={`flex ${msg.isUser ? "justify-end" : "justify-start"} items-start`}
+                          className={`flex ${
+                            msg.isUser ? "justify-end" : "justify-start"
+                          } items-start`}
                         >
                           {!msg.isUser && (
                             <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0 mr-2">
@@ -544,7 +551,7 @@ const App = () => {
                             className={`max-w-md px-4 py-2 rounded-lg ${
                               msg.isUser
                                 ? "bg-purple-600 ml-auto"
-                                : "bg-gray-700 mr-auto"
+                                : "bg-gray-800 mr-auto"
                             }`}
                           >
                             <p className="text-sm">{msg.text}</p>
@@ -562,7 +569,7 @@ const App = () => {
                           <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
                             A
                           </div>
-                          <div className="bg-gray-700 p-3 rounded-lg max-w-md flex items-center">
+                          <div className="bg-gray-800 p-3 rounded-lg max-w-md flex items-center">
                             <span className="dots">
                               <span>.</span>
                               <span>.</span>
@@ -584,9 +591,6 @@ const App = () => {
                       )}
                     </div>
 
-                    {/* Error Message */}
-                    {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
-
                     {/* Message Input */}
                     <form onSubmit={handleSendMessage} className="flex space-x-2">
                       <input
@@ -594,7 +598,7 @@ const App = () => {
                         placeholder="Type your message..."
                         value={inputMessage}
                         onChange={(e) => setInputMessage(e.target.value)}
-                        className="flex-1 px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="flex-1 px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                         disabled={!activeCharacter}
                       />
                       <button
@@ -603,7 +607,7 @@ const App = () => {
                         className={`px-4 py-2 rounded-lg transition-colors ${
                           inputMessage.trim() && activeCharacter
                             ? "bg-purple-600 hover:bg-purple-700"
-                            : "bg-gray-700 cursor-not-allowed"
+                            : "bg-gray-800 cursor-not-allowed"
                         }`}
                       >
                         Send
