@@ -1,5 +1,9 @@
 import React, { useState } from "react";
 
+// Glassmorphism and animation helpers
+const glass = "backdrop-blur-md bg-white/10 border border-white/20 shadow-xl";
+const fadeIn = "transition-all duration-500 ease-in-out";
+
 const App = () => {
   // Mock user data
   const [user] = useState({
@@ -102,12 +106,17 @@ const App = () => {
     setError("");
 
     try {
-      // Simulating API request delay and logic
-      const response = await getMockAIResponse(inputMessage);
-
+      // Call backend API instead of mock
+      const response = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMessage.text, character: activeCharacter }),
+      });
+      if (!response.ok) throw new Error("API error");
+      const data = await response.json();
       setMessages((prev) => [
         ...prev,
-        { text: response, isUser: false },
+        { text: data.reply, isUser: false },
       ]);
     } catch (err) {
       setError("Failed to get a response from AI. Please try again.");
@@ -116,109 +125,88 @@ const App = () => {
     }
   };
 
-  // More realistic mock AI response generator
-  const getMockAIResponse = (message) => {
-    const personality = activeCharacter?.description.toLowerCase() || "";
-    let basePrompt = `You are ${activeCharacter?.name}, ${personality}. The user said: "${message}". Respond naturally.`;
-
-    // Simulate different behavior based on NSFW status
-    if (activeCharacter.nsfw) {
-      basePrompt += " You can be bold and expressive.";
-    } else {
-      basePrompt += " Keep your tone friendly and appropriate.";
-    }
-
-    // Simulate LLM output
-    const aiResponses = [
-      `${activeCharacter.name}: That's an interesting question.`,
-      `${activeCharacter.name}: Let me think about how to respond...`,
-      `${activeCharacter.name}: I'd love to explore that topic with you.`,
-      `${activeCharacter.name}: Can you tell me more?`,
-      `${activeCharacter.name}: Hmm, what an intriguing idea!`,
-      `${activeCharacter.name}: I understand where you're coming from.`,
-      `${activeCharacter.name}: Fascinating!`,
-    ];
-
-    return aiResponses[Math.floor(Math.random() * aiResponses.length)];
-  };
-
   // Filtered characters based on tab
   const publicCharacters = user.characters.filter((c) => c.isPublic);
   const privateCharacters = user.characters.filter((c) => !c.isPublic);
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      {/* Header */}
-      <header className="bg-gray-800 shadow-lg sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
-            SecretAI
-          </h1>
-          <nav>
-            <ul className="flex space-x-6">
-              <li>
-                <button
-                  onClick={() => setActiveTab("home")}
-                  className={`py-2 ${
-                    activeTab === "home"
-                      ? "text-purple-400 border-b-2 border-purple-400"
-                      : "hover:text-purple-300 transition-colors"
-                  }`}
-                >
-                  Home
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => setActiveTab("my-characters")}
-                  className={`py-2 ${
-                    activeTab === "my-characters"
-                      ? "text-purple-400 border-b-2 border-purple-400"
-                      : "hover:text-purple-300 transition-colors"
-                  }`}
-                >
-                  My Characters
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => setActiveTab("chat")}
-                  className={`py-2 ${
-                    activeTab === "chat"
-                      ? "text-purple-400 border-b-2 border-purple-400"
-                      : "hover:text-purple-300 transition-colors"
-                  }`}
-                >
-                  Chat
-                </button>
-              </li>
-            </ul>
-          </nav>
-          <div className="flex items-center space-x-4">
-            <span className="hidden md:inline">Welcome, {user.username}</span>
-            <button
-              onClick={() => setActiveTab("my-characters")}
-              className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-full transition-colors"
-            >
-              Create Character
-            </button>
+    <div className="min-h-screen bg-gradient-to-br from-[#1a1333] via-[#2d1e4f] to-[#0f051d] text-white flex flex-col">
+      {/* Hero Header */}
+      <header className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-700/40 via-pink-500/10 to-indigo-900/60 pointer-events-none" />
+        <div className="container mx-auto px-4 py-12 flex flex-col md:flex-row justify-between items-center gap-8">
+          <div className="flex-1">
+            <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent drop-shadow-lg mb-4 animate-fade-in">
+              SecretAI
+            </h1>
+            <p className="text-lg md:text-2xl text-white/80 mb-6 max-w-xl animate-fade-in delay-100">
+              Create, chat, and explore with custom AI characters in a beautiful, immersive interface.
+            </p>
+            <div className="flex gap-4 animate-fade-in delay-200">
+              <button
+                onClick={() => setActiveTab("chat")}
+                className="px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 font-semibold shadow-lg transition-all transform hover:scale-105"
+              >
+                Start Chatting
+              </button>
+              <button
+                onClick={() => setActiveTab("my-characters")}
+                className="px-6 py-3 rounded-full border border-purple-400 text-purple-200 hover:bg-purple-800/30 font-semibold shadow-lg transition-all"
+              >
+                Create Character
+              </button>
+            </div>
+          </div>
+          <div className="flex-1 flex justify-center items-center animate-fade-in delay-300">
+            <div className="w-72 h-72 rounded-full bg-gradient-to-tr from-purple-500 via-pink-400 to-indigo-500 opacity-60 blur-2xl absolute z-0" />
+            <img
+              src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=facearea&w=400&q=80"
+              alt="AI Art"
+              className="relative z-10 w-60 h-60 object-cover rounded-3xl shadow-2xl border-4 border-white/10"
+            />
           </div>
         </div>
+        <nav className="container mx-auto px-4 pb-4 flex justify-center md:justify-end gap-8">
+          {[
+            { tab: "home", label: "Home" },
+            { tab: "my-characters", label: "My Characters" },
+            { tab: "chat", label: "Chat" },
+          ].map(({ tab, label }) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`text-lg font-medium px-4 py-2 rounded-full transition-all ${
+                activeTab === tab
+                  ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg"
+                  : "text-purple-200 hover:bg-purple-800/30"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 flex-1 w-full">
+        {/* Test Button - For Style Verification */}
+        <button style={{ backgroundColor: '#8b5cf6', color: 'white', padding: '1rem', borderRadius: '0.5rem', marginBottom: '1rem' }}>
+          Test Button
+        </button>
+
         {/* Home Tab */}
         {activeTab === "home" && (
-          <section>
-            <h2 className="text-3xl font-bold mb-6">Public Characters</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <section className="mt-12 animate-fade-in">
+            <h2 className="text-4xl font-extrabold mb-8 text-center bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent drop-shadow-lg">
+              Explore Public Characters
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {publicCharacters.map((character) => (
                 <div
                   key={character.id}
-                  className="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-purple-500/20 transition-shadow duration-300 group"
+                  className={`${glass} ${fadeIn} rounded-3xl overflow-hidden shadow-2xl hover:scale-105 hover:shadow-pink-500/30 group transition-transform duration-300`}
                 >
-                  <div className="relative h-48 overflow-hidden">
+                  <div className="relative h-56 overflow-hidden">
                     <img
                       src={character.image}
                       alt={character.name}
@@ -230,9 +218,11 @@ const App = () => {
                       </div>
                     )}
                   </div>
-                  <div className="p-4">
-                    <h3 className="text-xl font-semibold mb-2">{character.name}</h3>
-                    <p className="text-gray-300 text-sm mb-4 line-clamp-2">
+                  <div className="p-6">
+                    <h3 className="text-2xl font-bold mb-2 text-white/90">
+                      {character.name}
+                    </h3>
+                    <p className="text-gray-200 text-base mb-4 line-clamp-2">
                       {character.description}
                     </p>
                     <button
@@ -240,7 +230,7 @@ const App = () => {
                         setActiveTab("chat");
                         setActiveCharacter(character);
                       }}
-                      className="w-full bg-purple-600 hover:bg-purple-700 py-2 rounded-lg transition-colors"
+                      className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 py-2 rounded-xl font-semibold transition-all"
                     >
                       Chat with {character.name}
                     </button>
@@ -264,13 +254,13 @@ const App = () => {
                   publicCharacters.map((character) => (
                     <div
                       key={character.id}
-                      className="bg-gray-800 rounded-xl overflow-hidden shadow-lg"
+                      className={`${glass} ${fadeIn} rounded-3xl overflow-hidden shadow-2xl hover:scale-105 hover:shadow-pink-500/30 group transition-transform duration-300`}
                     >
                       <div className="relative h-48 overflow-hidden">
                         <img
                           src={character.image}
                           alt={character.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                         />
                         {character.nsfw && (
                           <div className="absolute top-2 right-2 bg-red-600 text-xs font-bold px-2 py-1 rounded-full">
@@ -278,11 +268,11 @@ const App = () => {
                           </div>
                         )}
                       </div>
-                      <div className="p-4">
-                        <h3 className="text-xl font-semibold mb-2">
+                      <div className="p-6">
+                        <h3 className="text-2xl font-bold mb-2 text-white/90">
                           {character.name}
                         </h3>
-                        <p className="text-gray-300 text-sm mb-4 line-clamp-2">
+                        <p className="text-gray-200 text-base mb-4 line-clamp-2">
                           {character.description}
                         </p>
                         <div className="flex justify-between">
@@ -314,13 +304,13 @@ const App = () => {
                   privateCharacters.map((character) => (
                     <div
                       key={character.id}
-                      className="bg-gray-800 rounded-xl overflow-hidden shadow-lg"
+                      className={`${glass} ${fadeIn} rounded-3xl overflow-hidden shadow-2xl hover:scale-105 hover:shadow-pink-500/30 group transition-transform duration-300`}
                     >
                       <div className="relative h-48 overflow-hidden">
                         <img
                           src={character.image}
                           alt={character.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                         />
                         {character.nsfw && (
                           <div className="absolute top-2 right-2 bg-red-600 text-xs font-bold px-2 py-1 rounded-full">
@@ -328,11 +318,11 @@ const App = () => {
                           </div>
                         )}
                       </div>
-                      <div className="p-4">
-                        <h3 className="text-xl font-semibold mb-2">
+                      <div className="p-6">
+                        <h3 className="text-2xl font-bold mb-2 text-white/90">
                           {character.name}
                         </h3>
-                        <p className="text-gray-300 text-sm mb-4 line-clamp-2">
+                        <p className="text-gray-200 text-base mb-4 line-clamp-2">
                           {character.description}
                         </p>
                         <div className="flex justify-between">
@@ -583,17 +573,17 @@ const App = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-800 py-6 mt-12">
-        <div className="container mx-auto px-4 text-center text-gray-400 text-sm">
-          <p>&copy; 2025 SecretAI. All rights reserved.</p>
-          <div className="mt-2 space-x-4">
-            <a href="#" className="hover:text-white transition-colors">
+      <footer className="bg-gradient-to-r from-purple-900/80 to-indigo-900/80 py-8 mt-12 shadow-inner animate-fade-in">
+        <div className="container mx-auto px-4 text-center text-white/70 text-base">
+          <p className="mb-2">&copy; 2025 SecretAI. All rights reserved.</p>
+          <div className="mt-2 space-x-6">
+            <a href="#" className="hover:text-pink-400 transition-colors font-medium">
               Terms
             </a>
-            <a href="#" className="hover:text-white transition-colors">
+            <a href="#" className="hover:text-pink-400 transition-colors font-medium">
               Privacy
             </a>
-            <a href="#" className="hover:text-white transition-colors">
+            <a href="#" className="hover:text-pink-400 transition-colors font-medium">
               Contact
             </a>
           </div>
