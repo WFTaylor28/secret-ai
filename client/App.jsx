@@ -159,13 +159,17 @@ const App = () => {
       // Pass chat memory for this character if available
       const memory = chatMemories[characterId] || "";
 
+      // Add style instruction for Pephops-style responses
+      const styleInstruction =
+        "Always respond as the character, using a mix of dialogue and descriptive actions in asterisks, like: *Her grin only grew wider at your reaction, clearly pleased that she had managed to rile you up.* 'Ahah, senpai's gotten a bit testy, have we?' *She leaned in, her voice taking on a playful, teasing tone.* 'Can't handle a little bit of conversation, Creep?' *She tossed the physics book back at you, it opening to a random page, and plopped down in the chair across from you, her eyes sparkling with amusement.'";
+
       const response = await fetch(BACKEND_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: userMessage.text,
           character: user.characters.find((c) => c.id === characterId),
-          memory,
+          memory: styleInstruction + "\n" + memory,
         }),
       });
       if (!response.ok) throw new Error("API error");
