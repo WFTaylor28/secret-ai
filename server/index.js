@@ -31,7 +31,7 @@ app.post("/chat", async (req, res) => {
     }\n\nUser: ${message}\n${character.name}:`;
 
     const response = await openai.completions.create({
-      model: "text-davinci-003",
+      model: "gpt-3.5-turbo-instruct",
       prompt: prompt,
       max_tokens: 150,
       temperature: 0.7,
