@@ -1,3 +1,0 @@
-# TEMPORARY FILE TO TRIGGER GITHUB ACTIONS
-
-This file can be deleted after deployment is successful.
