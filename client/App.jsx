@@ -626,7 +626,12 @@ function ChatPage({ user, getChatSession, handleSendMessage, inputMessage, setIn
         <Chat
           user={user}
           activeCharacter={character}
-          setActiveCharacter={() => {}}
+          setActiveCharacter={(char) => {
+            if (char && char.id !== character.id) {
+              // Navigate to the selected character's chat
+              window.location.hash = `#/chat/${char.id}`;
+            }
+          }}
           messages={session.messages}
           inputMessage={inputMessage}
           setInputMessage={setInputMessage}
