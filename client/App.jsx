@@ -79,6 +79,9 @@ const App = () => {
     nsfw: false,
   });
 
+  // Track created characters in state
+  const [createdCharacters, setCreatedCharacters] = useState([]);
+
 
   // Chat UI state (for /chat/:characterId)
   const [inputMessage, setInputMessage] = useState("");
@@ -113,6 +116,7 @@ const App = () => {
       ...newCharacter,
       id: Date.now(),
     };
+    setCreatedCharacters((prev) => [...prev, createdCharacter]);
     alert(`Character "${createdCharacter.name}" created successfully!`);
     setNewCharacter({
       name: "",
@@ -252,9 +256,10 @@ You must always include at least one action in asterisks and make the character'
     return aiResponses[Math.floor(Math.random() * aiResponses.length)];
   };
 
-  // Filtered characters
-  const publicCharacters = user.characters.filter((c) => c.isPublic);
-  const privateCharacters = user.characters.filter((c) => !c.isPublic);
+  // Filtered characters (include new and created)
+  const allCharacters = [...user.characters, ...createdCharacters];
+  const publicCharacters = allCharacters.filter((c) => c.isPublic);
+  const privateCharacters = allCharacters.filter((c) => !c.isPublic);
 
   const navigate = useNavigate();
 
