@@ -1,8 +1,9 @@
+
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-const { Configuration, OpenAIApi } = require("openai");
+const { OpenAI } = require("openai");
 
 const app = express();
 
@@ -14,10 +15,7 @@ app.use(express.json());
 app.use(express.static(path.resolve(__dirname, "../client")));
 
 // OpenAI Setup
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-const openai = new OpenAIApi(configuration);
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // POST /chat endpoint
 app.post("/chat", async (req, res) => {
@@ -32,14 +30,13 @@ app.post("/chat", async (req, res) => {
       character.nsfw ? "You can be bold and expressive." : "Keep your tone friendly."
     }\n\nUser: ${message}\n${character.name}:`;
 
-    const response = await openai.createCompletion({
+    const response = await openai.completions.create({
       model: "text-davinci-003",
       prompt: prompt,
       max_tokens: 150,
       temperature: 0.7,
     });
-
-    const aiMessage = response.data.choices[0].text.trim();
+    const aiMessage = response.choices[0].text.trim();
     res.json({ reply: aiMessage });
   } catch (error) {
     console.error("OpenAI Error:", error.message);
