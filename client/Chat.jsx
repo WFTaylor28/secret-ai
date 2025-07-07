@@ -17,22 +17,25 @@ const Chat = ({
       {/* Character List */}
       <div className="lg:col-span-1">
         <h3 className="text-xl font-semibold mb-4">Characters</h3>
-        <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+        <div className="space-y-2 max-h-[32rem] overflow-y-auto pr-2">
           {user.characters.map((character) => (
             <div
               key={character.id}
               onClick={() => setActiveCharacter(character)}
-              className={`bg-gray-900 p-3 rounded-lg flex items-center space-x-3 cursor-pointer transition-colors ${
-                activeCharacter?.id === character.id ? "ring-2 ring-purple-500" : "hover:bg-gray-800"
+              className={`relative bg-gray-900 p-3 rounded-xl flex items-center space-x-3 cursor-pointer transition-all duration-150 border-2 ${
+                activeCharacter?.id === character.id
+                  ? "border-pink-400 shadow-lg ring-2 ring-pink-400"
+                  : "border-transparent hover:bg-gray-800"
               }`}
+              style={{ boxSizing: 'border-box' }}
             >
               <img
                 src={character.image}
                 alt={character.name}
                 className="w-12 h-12 rounded-full object-cover"
               />
-              <div>
-                <h4 className="font-medium">{character.name}</h4>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-medium truncate">{character.name}</h4>
                 <p className="text-xs text-gray-400 truncate">{character.description}</p>
               </div>
             </div>
@@ -40,7 +43,7 @@ const Chat = ({
         </div>
       </div>
       {/* Chat Interface */}
-      <div className="lg:col-span-2 bg-gray-900 rounded-xl p-4 min-h-[400px] flex flex-col">
+      <div className="lg:col-span-2 bg-gray-900 rounded-xl p-4 min-h-[600px] flex flex-col">
         {!activeCharacter ? (
           <div className="flex-1 flex items-center justify-center text-gray-500">
             Select a character to start chatting.
@@ -56,7 +59,7 @@ const Chat = ({
               <h4 className="font-semibold">{activeCharacter.name}</h4>
             </div>
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto mb-4 space-y-4 pr-2">
+            <div className="flex-1 overflow-y-auto mb-4 space-y-4 pr-2 max-h-[420px]">
               {messages.map((msg, index) => (
                 <div
                   key={index}
@@ -109,22 +112,23 @@ const Chat = ({
               )}
             </div>
             {/* Message Input */}
-            <form onSubmit={handleSendMessage} className="flex space-x-2">
+            <form onSubmit={handleSendMessage} className="flex space-x-2 mt-2">
               <input
                 type="text"
                 placeholder="Type your message..."
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                className="flex-1 px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="flex-1 px-4 py-4 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400 text-base min-h-[3rem]"
                 disabled={!activeCharacter}
+                style={{ minHeight: '3rem' }}
               />
               <button
                 type="submit"
                 disabled={!inputMessage.trim() || !activeCharacter}
-                className={`px-4 py-2 rounded-lg transition-colors ${
+                className={`px-6 py-2 rounded-lg transition-colors text-base font-semibold ${
                   inputMessage.trim() && activeCharacter
-                    ? "bg-purple-600 hover:bg-purple-700"
-                    : "bg-gray-800 cursor-not-allowed"
+                    ? "bg-pink-500 hover:bg-pink-600 text-white"
+                    : "bg-gray-800 cursor-not-allowed text-gray-400"
                 }`}
               >
                 Send
