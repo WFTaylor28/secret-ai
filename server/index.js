@@ -164,7 +164,8 @@ app.post("/chat", async (req, res) => {
     global.conversationPreferences[convoKey].customInstructions = customInstructions;
   }
 
-  if (emotionLabel) {
+  // Ensure emotionLabel is always defined before use
+  if (typeof emotionLabel !== 'undefined' && emotionLabel) {
     global.conversationEmotionHistory[convoKey].push(emotionLabel);
     if (global.conversationEmotionHistory[convoKey].length > 10) {
       global.conversationEmotionHistory[convoKey] = global.conversationEmotionHistory[convoKey].slice(-10);
