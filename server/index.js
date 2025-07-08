@@ -117,7 +117,7 @@ app.post("/chat", async (req, res) => {
   let customInstructions = [];
   const messageText = typeof req.body.message === 'string' ? req.body.message : '';
   for (const { pattern, action } of feedbackPatterns) {
-    const matches = messageText.match(pattern);
+    const matches = typeof messageText === 'string' ? messageText.match(pattern) : null;
     if (matches) {
       detectedFeedback.push(action);
       // For style/mood/focus/avoid/less_of/more_of/custom, extract the specific preference or instruction
@@ -164,12 +164,45 @@ app.post("/chat", async (req, res) => {
     global.conversationPreferences[convoKey].customInstructions = customInstructions;
   }
 
-  // Ensure emotionLabel is always defined before use
-  if (typeof emotionLabel !== 'undefined' && emotionLabel) {
-    global.conversationEmotionHistory[convoKey].push(emotionLabel);
-    if (global.conversationEmotionHistory[convoKey].length > 10) {
-      global.conversationEmotionHistory[convoKey] = global.conversationEmotionHistory[convoKey].slice(-10);
+  // --- Emotional Intelligence: Sentiment and Emotion Analysis, Empathy Prompt Injection ---
+  let emotionLabel = '';
+  let sentimentLabel = '';
+  try {
+    // Emotion detection
+    const emotionRes = await fetch('https://api-inference.huggingface.co/models/j-hartmann/emotion-english-distilroberta-base', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY || ''}` },
+      body: JSON.stringify({ inputs: req.body.message })
+    });
+    if (emotionRes.ok) {
+      const emotionData = await emotionRes.json();
+      if (emotionData[0]?.label) emotionLabel = emotionData[0].label;
     }
+  } catch {}
+  try {
+    // Sentiment detection
+    const sentimentRes = await fetch('https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment-latest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY || ''}` },
+      body: JSON.stringify({ inputs: req.body.message })
+    });
+    if (sentimentRes.ok) {
+      const sentimentData = await sentimentRes.json();
+      if (sentimentData[0]?.label) sentimentLabel = sentimentData[0].label;
+    }
+  } catch {}
+
+  // --- Update conversationEmotionHistory with detected emotionLabel (after detection) ---
+  try {
+    if (typeof emotionLabel !== 'undefined' && emotionLabel) {
+      if (!global.conversationEmotionHistory[convoKey]) global.conversationEmotionHistory[convoKey] = [];
+      global.conversationEmotionHistory[convoKey].push(emotionLabel);
+      if (global.conversationEmotionHistory[convoKey].length > 10) {
+        global.conversationEmotionHistory[convoKey] = global.conversationEmotionHistory[convoKey].slice(-10);
+      }
+    }
+  } catch (err) {
+    console.error('Error updating emotionLabel history:', err);
   }
 
   // Compose emotion history string
@@ -217,8 +250,7 @@ app.post("/chat", async (req, res) => {
     }
   }
   // --- Emotional Intelligence: Sentiment and Emotion Analysis, Empathy Prompt Injection ---
-  let emotionLabel = '';
-  let sentimentLabel = '';
+  // (Removed duplicate declarations of emotionLabel and sentimentLabel)
   try {
     // Emotion detection
     const emotionRes = await fetch('https://api-inference.huggingface.co/models/j-hartmann/emotion-english-distilroberta-base', {
