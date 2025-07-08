@@ -11,6 +11,8 @@ const fadeIn = "transition-all duration-500 ease-in-out";
 
 const App = () => {
   // My Characters modal
+  // Search bar state
+  const [searchQuery, setSearchQuery] = useState("");
   const [showMyCharacters, setShowMyCharacters] = useState(false);
   const [editCharacter, setEditCharacter] = useState(null); // character object or null
   // Chat memory modal and per-character memory
@@ -73,6 +75,13 @@ const App = () => {
 
   // Chat sessions: [{ characterId, messages: [], lastActive, ... }]
   const [chatSessions, setChatSessions] = useState([]);
+
+  // Filtered characters for search
+  const filteredCharacters = user.characters.filter(
+    (char) =>
+      char.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      char.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // Character creation form state
   const [newCharacter, setNewCharacter] = useState({
@@ -381,6 +390,17 @@ const App = () => {
             >
               Create Character
             </button>
+          </div>
+          {/* Search Bar */}
+          <div className="flex-1 flex justify-center mx-4">
+            <input
+              type="text"
+              placeholder="Search characters..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full max-w-xs px-4 py-2 rounded-full bg-white/20 text-white placeholder-white/60 border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-400 transition-all"
+              style={{minWidth: 180}}
+            />
           </div>
           {/* Hamburger/Vertical Dots Menu */}
           <div className="relative">
