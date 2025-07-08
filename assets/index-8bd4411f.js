@@ -78,12 +78,12 @@ _What if they never arrive?_
   font-style: italic;
 }
 em.ai-action {
-  color: #bbb !important;
+  color: #a3a3a3 !important; /* slightly darker than white */
   font-style: normal;
   font-weight: 500;
 }
 em.user-action {
-  color: #bbb !important;
+  color: #a3a3a3 !important; /* slightly darker than white */
   font-style: normal;
   font-weight: 600;
 }
