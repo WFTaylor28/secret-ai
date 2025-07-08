@@ -207,17 +207,10 @@ const App = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: userMessage.text,
-          user_id: user.id,
-          character_id: characterId,
-          backstory: character.backstory || "",
-          personality: character.personality || "",
-          motivations: character.motivations || "",
-          values: character.values || "",
-          accent: character.accent || "",
-          description: character.description || "",
-          // Optionally add: environment, feedback, user_skill, choice, etc.
-          // history: history, // If you want to send chat history for memory
+          message: userMessage.text, // FIX: must be 'message' not 'prompt'
+          character: character,      // FIX: must be 'character' object, not just fields
+          history: history,          // Send chat history for memory
+          userId: user.id,
         }),
       });
       if (!response.ok) throw new Error("API error");
