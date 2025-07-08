@@ -1,4 +1,12 @@
 import React from "react";
+// Helper to render AI character responses with formatting
+function renderCharacterResponse(text) {
+  // Convert *asterisks* to <em> for thoughts
+  text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  // Convert [brackets] to <span class="action"> for actions
+  text = text.replace(/\[(.+?)\]/g, '<span class="action">[$1]</span>');
+  return { __html: text };
+}
 
 const Chat = ({
   user,
@@ -75,7 +83,11 @@ const Chat = ({
                       msg.isUser ? "bg-purple-600 ml-auto" : "bg-gray-800 mr-auto"
                     }`}
                   >
-                    <p className="text-sm">{msg.text}</p>
+                    {msg.isUser ? (
+                      <p className="text-sm">{msg.text}</p>
+                    ) : (
+                      <p className="text-sm" dangerouslySetInnerHTML={renderCharacterResponse(msg.text)} />
+                    )}
                   </div>
                   {msg.isUser && (
                     <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 ml-2">
@@ -140,5 +152,23 @@ const Chat = ({
     </div>
   </section>
 );
+
+
+// Add CSS for .action and em (can be moved to styles.css)
+const style = document.createElement('style');
+style.innerHTML = `
+.action {
+  color: #888;
+  font-style: italic;
+}
+em {
+  color: #666;
+  font-style: normal;
+}
+`;
+if (!document.getElementById('character-style')) {
+  style.id = 'character-style';
+  document.head.appendChild(style);
+}
 
 export default Chat;

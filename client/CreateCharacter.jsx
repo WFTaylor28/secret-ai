@@ -55,6 +55,17 @@ const CreateCharacter = ({
           placeholder="Describe your character..."
         ></textarea>
       </div>
+      <div>
+        <label className="block text-sm font-medium mb-1">Current Scenario</label>
+        <textarea
+          name="scenario"
+          value={newCharacter.scenario || ""}
+          onChange={handleInputChange}
+          rows={2}
+          className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+          placeholder="Describe the current circumstances or context for this character's story..."
+        ></textarea>
+      </div>
       <div className="flex flex-wrap gap-4">
         <label className="flex items-center space-x-2">
           <input

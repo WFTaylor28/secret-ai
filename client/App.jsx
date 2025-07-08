@@ -75,6 +75,7 @@ const App = () => {
     name: "",
     image: null,
     description: "",
+    scenario: "",
     isPublic: false,
     nsfw: false,
   });
@@ -122,6 +123,7 @@ const App = () => {
       name: "",
       image: null,
       description: "",
+      scenario: "",
       isPublic: false,
       nsfw: false,
     });
@@ -168,24 +170,12 @@ const App = () => {
       // Show ... bubble while waiting
       setPendingAI({ text: "", isUser: false, thinking: true });
 
-      // Pass chat memory for this character if available
-      const memory = chatMemories[characterId] || "";
-
-      // Add ultra-forceful Pephops-style instruction
-      const styleInstruction = `
-You are a character in a chat. You must ALWAYS reply with a mix of dialogue and vivid, emotional, in-character actions in asterisks. Never reply with only plain dialogue. Every response must:
-- Include at least one action or emotion in asterisks (e.g. *She grins, tossing the book.*)
-- Show body language, facial expression, or movement
-- Be immersive, playful, and descriptive, like these examples:
-
-*Her grin only grew wider at your reaction, clearly pleased that she had managed to rile you up.* "Ahah, senpai's gotten a bit testy, have we?" *She leaned in, her voice taking on a playful, teasing tone.* "Can't handle a little bit of conversation, Creep?" *She tossed the physics book back at you, it opening to a random page, and plopped down in the chair across from you, her eyes sparkling with amusement.*
-
-*He rolls his eyes dramatically, but there's a hint of a smile tugging at his lips.* "Oh, so now you want my help?" *He crosses his arms, feigning annoyance, but you can tell he's secretly pleased.*
-
-*She lets out a soft laugh, tucking a strand of hair behind her ear.* "You really are something else, you know that?" *Her gaze lingers on you, warm and full of mischief.*
-
-Do NOT break character. Do NOT summarize. Do NOT be generic. Do NOT reply with only dialogue. Begin your reply now:
-`;
+      // Prepare chat history for backend (last 8 messages)
+      let sessionMessages = session ? session.messages : [];
+      // Add the new user message (not yet in session)
+      sessionMessages = [...sessionMessages, userMessage];
+      // Only send the last 8 messages (4 exchanges)
+      const history = sessionMessages.slice(-8);
 
       const response = await fetch(BACKEND_URL, {
         method: "POST",
@@ -193,7 +183,7 @@ Do NOT break character. Do NOT summarize. Do NOT be generic. Do NOT reply with o
         body: JSON.stringify({
           message: userMessage.text,
           character: user.characters.find((c) => c.id === characterId),
-          memory: styleInstruction + "\n" + memory,
+          history,
         }),
       });
       if (!response.ok) throw new Error("API error");
