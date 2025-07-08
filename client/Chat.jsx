@@ -1,9 +1,14 @@
 import React from "react";
-// Helper to render AI character responses with formatting
-function renderCharacterResponse(text) {
-  // Convert *asterisks* to <em> for thoughts
-  text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  // Convert [brackets] to <span class="action"> for actions
+// Helper to render chat message formatting (actions/expressions/thoughts)
+function renderFormattedMessage(text, isUser) {
+  // *action* or *expression* to <em>
+  // For user, use a different class for <em>
+  if (isUser) {
+    text = text.replace(/\*(.+?)\*/g, '<em class="user-action">$1</em>');
+  } else {
+    text = text.replace(/\*(.+?)\*/g, '<em class="ai-action">$1</em>');
+  }
+  // [brackets] to <span class="action">
   text = text.replace(/\[(.+?)\]/g, '<span class="action">[$1]</span>');
   return { __html: text };
 }
@@ -71,28 +76,37 @@ const Chat = ({
               {messages.map((msg, index) => (
                 <div
                   key={index}
-                  className={`flex ${msg.isUser ? "justify-end" : "justify-start"} items-start`}
+                  className={`flex items-start ${msg.isUser ? 'justify-end' : 'justify-start'}`}
                 >
-                  {!msg.isUser && (
-                    <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0 mr-2">
-                      A
-                    </div>
-                  )}
-                  <div
-                    className={`max-w-md px-4 py-2 rounded-lg ${
-                      msg.isUser ? "bg-purple-600 ml-auto" : "bg-gray-800 mr-auto"
-                    }`}
-                  >
-                    {msg.isUser ? (
-                      <p className="text-sm">{msg.text}</p>
-                    ) : (
-                      <p className="text-sm" dangerouslySetInnerHTML={renderCharacterResponse(msg.text)} />
-                    )}
-                  </div>
+                  {/* User message: icon then bubble (avatar on far right) */}
                   {msg.isUser && (
-                    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 ml-2">
-                      U
-                    </div>
+                    <>
+                      <div className="flex items-center">
+                        <div
+                          className="max-w-md px-4 py-2 rounded-lg ml-2 order-1"
+                          style={{ background: '#23272f', color: '#fff' }}
+                        >
+                          <p className="text-sm" dangerouslySetInnerHTML={renderFormattedMessage(msg.text, true)} />
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 order-2">
+                          U
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  {/* AI message: icon then bubble */}
+                  {!msg.isUser && (
+                    <>
+                      <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0 mr-2">
+                        A
+                      </div>
+                      <div
+                        className="max-w-md px-4 py-2 rounded-lg"
+                        style={{ background: '#23272f', color: '#fff' }}
+                      >
+                        <p className="text-sm" dangerouslySetInnerHTML={renderFormattedMessage(msg.text, false)} />
+                      </div>
+                    </>
                   )}
                 </div>
               ))}
@@ -154,21 +168,6 @@ const Chat = ({
 );
 
 
-// Add CSS for .action and em (can be moved to styles.css)
-const style = document.createElement('style');
-style.innerHTML = `
-.action {
-  color: #888;
-  font-style: italic;
-}
-em {
-  color: #666;
-  font-style: normal;
-}
-`;
-if (!document.getElementById('character-style')) {
-  style.id = 'character-style';
-  document.head.appendChild(style);
-}
+
 
 export default Chat;

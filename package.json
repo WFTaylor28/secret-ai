@@ -1,0 +1,13 @@
+{
+  "name": "secret-ai",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server/index.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.0.1",
+    "openai": "^4.104.0",
+    "react-router-dom": "^7.6.3"
+  }
+}

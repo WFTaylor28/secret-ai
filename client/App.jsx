@@ -38,6 +38,7 @@ const App = () => {
         description: "A bubbly, expressive college student who loves teasing her friends and is always up for a challenge.",
         isPublic: true,
         nsfw: false,
+        firstMessage: '*twirls a strand of hair, grinning mischievously* "Hey there! Ready for a little fun? I hope you can keep up!"',
       },
       {
         id: 2,
@@ -46,6 +47,7 @@ const App = () => {
         description: "A sarcastic but secretly soft-hearted barista with a knack for witty banter and dramatic eye rolls.",
         isPublic: true,
         nsfw: false,
+        firstMessage: '*leans on the counter, smirking* "Well, well, look who wandered in. Coffee or conversation first?"',
       },
       {
         id: 3,
@@ -54,6 +56,7 @@ const App = () => {
         description: "A mysterious, artistic soul who expresses herself through subtle gestures and intense gazes.",
         isPublic: true,
         nsfw: false,
+        firstMessage: '*glances up from her sketchbook, eyes shimmering with curiosity* "Oh... hello. Did you want to see what I’m drawing?"',
       },
       {
         id: 4,
@@ -62,6 +65,7 @@ const App = () => {
         description: "A playful, energetic dancer who can't sit still and loves to make people laugh with silly antics.",
         isPublic: true,
         nsfw: false,
+        firstMessage: '*spins around and strikes a silly pose* "Hey! Bet you can’t out-dance me. Or out-joke me! Wanna try?"',
       },
     ],
   });
@@ -263,6 +267,35 @@ const App = () => {
 
   // Open chat with character (from anywhere)
   const openChatWithCharacter = (characterId) => {
+    setChatSessions((prev) => {
+      let session = prev.find((s) => s.characterId === characterId);
+      if (!session) {
+        // Find character (from allCharacters)
+        const character = allCharacters.find((c) => c.id === characterId);
+        let initialMessages = [];
+        if (character && character.firstMessage && character.firstMessage.trim()) {
+          initialMessages = [{ text: character.firstMessage.trim(), isUser: false }];
+        }
+        session = {
+          characterId,
+          messages: initialMessages,
+          lastActive: new Date(),
+        };
+        return [...prev, session];
+      }
+      // If session exists but has no messages and character has a firstMessage, add it
+      if (session.messages.length === 0) {
+        const character = allCharacters.find((c) => c.id === characterId);
+        if (character && character.firstMessage && character.firstMessage.trim()) {
+          session = {
+            ...session,
+            messages: [{ text: character.firstMessage.trim(), isUser: false }],
+          };
+          return prev.map((s) => s.characterId === characterId ? session : s);
+        }
+      }
+      return prev;
+    });
     navigate(`/chat/${characterId}`);
   };
 

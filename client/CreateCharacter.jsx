@@ -66,6 +66,20 @@ const CreateCharacter = ({
           placeholder="Describe the current circumstances or context for this character's story..."
         ></textarea>
       </div>
+      <div>
+        <label className="block text-sm font-medium mb-1">First Message (what the AI says to start the chat)</label>
+        <textarea
+          name="firstMessage"
+          value={newCharacter.firstMessage || ""}
+          onChange={handleInputChange}
+          rows={4}
+          required
+          className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+          placeholder={
+            `Example:\n**The character paces the room, glancing at the door.**\n_What if they never arrive?_\n\n"You're finally here! I was starting to think you'd forgotten about me."\n\n**She grins, folding her arms.**\n\n(Write the AI's first message in this immersive, expressive style. Use double asterisks for actions, _italics_ for thoughts, and quotes for speech. Alternate between actions and speech, and include at least three actions and one internal thought.)`
+          }
+        ></textarea>
+      </div>
       <div className="flex flex-wrap gap-4">
         <label className="flex items-center space-x-2">
           <input
