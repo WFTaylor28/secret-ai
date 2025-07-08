@@ -115,8 +115,9 @@ app.post("/chat", async (req, res) => {
   let detectedFeedback = [];
   let detectedPreferences = {};
   let customInstructions = [];
+  const messageText = typeof req.body.message === 'string' ? req.body.message : '';
   for (const { pattern, action } of feedbackPatterns) {
-    const matches = req.body.message.match(pattern);
+    const matches = messageText.match(pattern);
     if (matches) {
       detectedFeedback.push(action);
       // For style/mood/focus/avoid/less_of/more_of/custom, extract the specific preference or instruction
