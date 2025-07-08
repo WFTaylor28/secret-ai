@@ -87,6 +87,13 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 app.post("/chat", async (req, res) => {
   // --- Expanded Emotional Intelligence: Track Conversation Emotion History & Personality-aware Empathy ---
   // --- Continuous Learning & Improvement: Track User Feedback, Preferences, and Adapt AI ---
+  // Move destructure to top so character/message/history are available for all logic
+  // Destructure once at the top for all logic
+  const { message, character, history } = req.body;
+  // Validate character and message at the very top before any use
+  if (!message || !character || !character.name || !character.description) {
+    return res.status(400).json({ error: "Character must include 'name' and 'description' and a message must be provided." });
+  }
   if (!global.conversationEmotionHistory) global.conversationEmotionHistory = {};
   if (!global.conversationPreferences) global.conversationPreferences = {};
   if (!global.conversationFeedback) global.conversationFeedback = {};
@@ -336,7 +343,7 @@ app.post("/chat", async (req, res) => {
     }
   } catch (e) { /* ignore NLP errors */ }
 
-  const { message, character, history } = req.body;
+  // (Removed duplicate destructure of message, character, history)
 
   // 1. Validate character object
   if (!message || !character || !character.name || !character.description) {
