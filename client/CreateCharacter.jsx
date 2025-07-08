@@ -44,15 +44,72 @@ const CreateCharacter = ({
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">Backstory / Description</label>
+        <label className="block text-sm font-medium mb-1">Backstory</label>
+        <textarea
+          name="backstory"
+          value={newCharacter.backstory || ""}
+          onChange={handleInputChange}
+          rows={2}
+          className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+          placeholder="Describe your character's backstory..."
+        ></textarea>
+      </div>
+      <div>
+        <label className="block text-sm font-medium mb-1">Personality Traits</label>
+        <input
+          type="text"
+          name="personality"
+          value={newCharacter.personality || ""}
+          onChange={handleInputChange}
+          className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+          placeholder="e.g. sarcastic, kind, brave, funny, shy, youthful, etc. (comma separated)"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium mb-1">Motivations</label>
+        <input
+          type="text"
+          name="motivations"
+          value={newCharacter.motivations || ""}
+          onChange={handleInputChange}
+          className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+          placeholder="What drives your character? (comma separated)"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium mb-1">Values</label>
+        <input
+          type="text"
+          name="values"
+          value={newCharacter.values || ""}
+          onChange={handleInputChange}
+          className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+          placeholder="What does your character value? (comma separated)"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium mb-1">Accent / Dialect</label>
+        <select
+          name="accent"
+          value={newCharacter.accent || ""}
+          onChange={handleInputChange}
+          className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+        >
+          <option value="">None</option>
+          <option value="british">British</option>
+          <option value="southern">Southern US</option>
+          <option value="pirate">Pirate</option>
+        </select>
+      </div>
+      <div>
+        <label className="block text-sm font-medium mb-1">Description</label>
         <textarea
           name="description"
           value={newCharacter.description}
           onChange={handleInputChange}
-          rows={3}
-          required
+          rows={2}
           className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-          placeholder="Describe your character..."
+          placeholder="Describe your character's appearance, quirks, or style..."
         ></textarea>
       </div>
       <div>

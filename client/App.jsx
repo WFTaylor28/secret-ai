@@ -78,6 +78,11 @@ const App = () => {
   const [newCharacter, setNewCharacter] = useState({
     name: "",
     image: null,
+    backstory: "",
+    personality: "",
+    motivations: "",
+    values: "",
+    accent: "",
     description: "",
     scenario: "",
     isPublic: false,
@@ -126,6 +131,11 @@ const App = () => {
     setNewCharacter({
       name: "",
       image: null,
+      backstory: "",
+      personality: "",
+      motivations: "",
+      values: "",
+      accent: "",
       description: "",
       scenario: "",
       isPublic: false,
@@ -181,13 +191,24 @@ const App = () => {
       // Only send the last 8 messages (4 exchanges)
       const history = sessionMessages.slice(-8);
 
+      // Find character (from allCharacters)
+      const character = allCharacters.find((c) => c.id === characterId);
+      // Prepare backend payload with all advanced fields
       const response = await fetch(BACKEND_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: userMessage.text,
-          character: user.characters.find((c) => c.id === characterId),
-          history,
+          prompt: userMessage.text,
+          user_id: user.id,
+          character_id: characterId,
+          backstory: character.backstory || "",
+          personality: character.personality || "",
+          motivations: character.motivations || "",
+          values: character.values || "",
+          accent: character.accent || "",
+          description: character.description || "",
+          // Optionally add: environment, feedback, user_skill, choice, etc.
+          // history: history, // If you want to send chat history for memory
         }),
       });
       if (!response.ok) throw new Error("API error");
