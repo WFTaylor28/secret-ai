@@ -90,7 +90,8 @@ app.post("/chat", async (req, res) => {
   if (!global.conversationEmotionHistory) global.conversationEmotionHistory = {};
   if (!global.conversationPreferences) global.conversationPreferences = {};
   if (!global.conversationFeedback) global.conversationFeedback = {};
-  const convoKey = req.body.conversationId || (user && user.id) || 'default';
+  // Use userId from req.body if available, otherwise fallback to conversationId or 'default'
+  const convoKey = req.body.conversationId || req.body.userId || 'default';
   if (!global.conversationEmotionHistory[convoKey]) global.conversationEmotionHistory[convoKey] = [];
   if (!global.conversationPreferences[convoKey]) global.conversationPreferences[convoKey] = {};
   if (!global.conversationFeedback[convoKey]) global.conversationFeedback[convoKey] = [];
