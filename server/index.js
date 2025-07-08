@@ -1,3 +1,19 @@
+
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const path = require("path");
+const { OpenAI } = require("openai");
+
+const app = express();
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Serve static files from client folder (React app)
+app.use(express.static(path.resolve(__dirname, "../client")));
+
 // --- MARKOV CHAIN DEMO GENERATOR ---
 // This is a simple, optional Markov chain text generator for demo/educational purposes only.
 // It is NOT used for main chat responses, but can be called for fun/testing.
@@ -63,20 +79,6 @@ app.post('/deepgen', async (req, res) => {
     res.status(500).json({ error: 'Failed to contact deepgen service', details: e.message });
   }
 });
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
-const path = require("path");
-const { OpenAI } = require("openai");
-
-const app = express();
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Serve static files from client folder (React app)
-app.use(express.static(path.resolve(__dirname, "../client")));
 
 // OpenAI Setup
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
