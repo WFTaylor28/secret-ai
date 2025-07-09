@@ -11,7 +11,23 @@ function renderFormattedMessage(text, isUser) {
     const cls = isUser ? 'user-action' : 'ai-action';
     return `${pre}<em class=\"${cls}\">${emoteText}</em>`;
   });
-  // [brackets] to <span class="action">
+
+  // [SENSORY: ...] or [SCENT: ...] or [SOUND: ...] etc. to <span class="action">[**...**]</span>
+  // This will bold the sensory label and content inside the brackets
+  text = text.replace(/\[(\s*[A-Z]+\s*:[^\]]+?)\]/g, (match, content) => {
+    // Wrap the whole content in <b> (or strong) and surround with [ ]
+    return `<span class=\"action\">[<strong>${content.trim()}</strong>]</span>`;
+  });
+
+  // _inner thoughts_ to <em class="ai-action">...</em> for AI, or user-action for user
+  // Only if not already inside *...* or **...**
+  // This will match _..._ (not inside words)
+  text = text.replace(/(^|\s)_([^_]+)_($|\s|[.!?,;:])/g, (match, pre, inner, post) => {
+    const cls = isUser ? 'user-action' : 'ai-action';
+    return `${pre}<em class=\"${cls}\">${inner}</em>${post}`;
+  });
+
+  // [brackets] to <span class="action">[...]]</span> (fallback for non-sensory brackets)
   text = text.replace(/\[(.+?)\]/g, '<span class="action">[$1]</span>');
   return { __html: text };
 }
