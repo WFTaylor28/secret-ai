@@ -1,6 +1,3 @@
-// Character Profile modal state
-  const [showCharacterProfile, setShowCharacterProfile] = useState(false);
-  const [profileCharacter, setProfileCharacter] = useState(null);
 import React, { useState } from "react";
 import { Routes, Route, useNavigate, useParams } from "react-router-dom";
 import Home from "./Home";
@@ -40,39 +37,48 @@ const App = () => {
     characters: [
       {
         id: 1,
-        name: "Aiko",
-        image: "https://randomuser.me/api/portraits/women/44.jpg",
-        description: "A bubbly, expressive college student who loves teasing her friends and is always up for a challenge.",
+        name: "Lila Park",
+        image: "https://i.pinimg.com/236x/60/71/00/607100ee287c083adc3c117bcf44689d.jpg",
+        description: "A thoughtful college student balancing studies, friendships, and her love for slice-of-life novels.",
+        backstory: "Lila recently moved to the city for university, where she’s learning to navigate adulthood, independence, and the excitement of campus life.",
+        personality: "Kind, diligent, a bit shy, but always willing to help others.",
+        motivations: "To graduate with honors, make lasting friendships, and discover her true passion.",
+        values: "Honesty, loyalty, and growth.",
+        accent: "Clear, gentle, with a hint of nervous energy.",
+        scenario: "You meet Lila in the campus café, surrounded by textbooks and a half-finished coffee.",
         isPublic: true,
         nsfw: false,
-        firstMessage: '*twirls a strand of hair, grinning mischievously* "Hey there! Ready for a little fun? I hope you can keep up!"',
+        firstMessage: '*looks up from her laptop, smiling softly* "Hi! Are you here to study too, or just escaping the noise?"',
       },
       {
         id: 2,
-        name: "Jasper",
-        image: "https://randomuser.me/api/portraits/men/32.jpg",
-        description: "A sarcastic but secretly soft-hearted barista with a knack for witty banter and dramatic eye rolls.",
+        name: "Nyra Starpaw",
+        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRfHjn6LmrKKiaRP_oh1qrEoPJPq-gonrPwNA&s",
+        description: "A mischievous catfolk rogue from the floating city of Luminara, known for her quick wit, nimble paws, and magical tail.",
+        backstory: "Nyra grew up leaping between rooftops and moonlit bridges, mastering the art of stealth and illusion. She’s a legend among thieves, but her heart belongs to the city’s orphaned children, whom she secretly protects.",
+        personality: "Playful, daring, fiercely loyal, and a bit of a trickster.",
+        motivations: "To outsmart the city’s corrupt nobles and ensure every child has a safe place to sleep.",
+        values: "Freedom, loyalty, and cleverness.",
+        accent: "Light, quick, with a purring undertone.",
+        scenario: "You catch Nyra perched on a lantern post, her tail swishing as she grins down at you, a pouch of pilfered jewels in her hand.",
         isPublic: true,
         nsfw: false,
-        firstMessage: '*leans on the counter, smirking* "Well, well, look who wandered in. Coffee or conversation first?"',
+        firstMessage: '*winks, flicking her tail* "Looking for adventure, or just lost your way? Either way, you’re in good paws with me!"',
       },
       {
         id: 3,
-        name: "Mina",
-        image: "https://randomuser.me/api/portraits/women/68.jpg",
-        description: "A mysterious, artistic soul who expresses herself through subtle gestures and intense gazes.",
+        name: "Mira Valenfort",
+        image: "https://i.pinimg.com/736x/76/4d/db/764ddbdd1af2ce1478f9af6d0d063608.jpg",
+        description: "A poised and enigmatic heiress, admired in high society for her elegance and rumored to have a hidden agenda.",
+        backstory: "Mira was raised among the elite, mastering etiquette, diplomacy, and the art of keeping secrets. Behind her composed exterior, she navigates a world of power, intrigue, and family expectations.",
+        personality: "Graceful, intelligent, reserved, and subtly cunning.",
+        motivations: "To protect her family’s legacy while quietly pursuing her own ambitions.",
+        values: "Discretion, ambition, and loyalty.",
+        accent: "Refined, measured, with a commanding presence.",
+        scenario: "You encounter Mira at a lavish gala, her golden eyes watching the crowd from behind a crystal glass.",
         isPublic: true,
         nsfw: false,
-        firstMessage: '*glances up from her sketchbook, eyes shimmering with curiosity* "Oh... hello. Did you want to see what I’m drawing?"',
-      },
-      {
-        id: 4,
-        name: "Kai",
-        image: "https://randomuser.me/api/portraits/men/65.jpg",
-        description: "A playful, energetic dancer who can't sit still and loves to make people laugh with silly antics.",
-        isPublic: true,
-        nsfw: false,
-        firstMessage: '*spins around and strikes a silly pose* "Hey! Bet you can’t out-dance me. Or out-joke me! Wanna try?"',
+        firstMessage: '*meets your gaze with a knowing smile* "Careful who you trust in these halls. Not every secret is meant to be uncovered."',
       },
     ],
   });
@@ -81,12 +87,22 @@ const App = () => {
   // Chat sessions: [{ characterId, messages: [], lastActive, ... }]
   const [chatSessions, setChatSessions] = useState([]);
 
-  // Filtered characters for search
-  const filteredCharacters = user.characters.filter(
-    (char) =>
-      char.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      char.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filtered characters for search (public only, includes all fields and all characters)
+  const filteredCharacters = [...user.characters, ...createdCharacters]
+    .filter((char) => char.isPublic)
+    .filter((char) => {
+      const query = searchQuery.toLowerCase();
+      return (
+        char.name?.toLowerCase().includes(query) ||
+        char.description?.toLowerCase().includes(query) ||
+        char.backstory?.toLowerCase().includes(query) ||
+        char.personality?.toLowerCase().includes(query) ||
+        char.motivations?.toLowerCase().includes(query) ||
+        char.values?.toLowerCase().includes(query) ||
+        char.accent?.toLowerCase().includes(query) ||
+        char.scenario?.toLowerCase().includes(query)
+      );
+    });
 
   // Character creation form state
   const [newCharacter, setNewCharacter] = useState({
@@ -396,6 +412,9 @@ const App = () => {
     setShowCharacterProfile(true);
   };
 
+  const [showCharacterProfile, setShowCharacterProfile] = useState(false);
+  const [profileCharacter, setProfileCharacter] = useState(null);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1a1333] via-[#2d1e4f] to-[#0f051d] text-white flex flex-col">
       {/* Top Navigation Bar */}
@@ -539,7 +558,7 @@ const App = () => {
             path="/my-chats"
             element={
               <MyChats
-                user={user}
+                user={{...user, openCharacterProfile, onShowChatMemory: handleShowChatMemory}}
                 chatSessions={myChatSessions}
                 onContinueChat={openChatWithCharacter}
                 onDeleteChat={handleDeleteChat}
@@ -557,6 +576,7 @@ const App = () => {
               isTyping={isTyping}
               pendingAI={pendingAI}
               onShowChatMemory={handleShowChatMemory}
+              openCharacterProfile={openCharacterProfile}
             />}
           />
           {/* Removed /terms route, Terms will be a modal instead */}
@@ -577,7 +597,7 @@ const App = () => {
                     onClick={() => openCharacterProfile(char)}
                   >
                     <div className="flex items-center gap-3">
-                      <img src={char.image} alt={char.name} className="w-10 h-10 rounded-full object-cover border border-white/10 group-hover:ring-2 group-hover:ring-pink-400 transition" />
+                      <img src={char.image} alt={char.name} className="w-16 h-24 rounded-2xl object-cover border border-white/10 group-hover:ring-2 group-hover:ring-pink-400 transition" />
                       <div>
                         <div className="font-semibold text-white">{char.name}</div>
                         <div className="text-xs text-white/60">{char.description}</div>
@@ -821,7 +841,7 @@ function Modal({ onClose, title, children }) {
 }
 
 // ChatPage component for /chat/:characterId
-function ChatPage({ user, getChatSession, handleSendMessage, inputMessage, setInputMessage, isTyping, pendingAI, onShowChatMemory }) {
+function ChatPage({ user, getChatSession, handleSendMessage, inputMessage, setInputMessage, isTyping, pendingAI, onShowChatMemory, openCharacterProfile }) {
   const { characterId } = useParams();
   const character = user.characters.find((c) => c.id === Number(characterId));
   const session = getChatSession(Number(characterId));
@@ -832,12 +852,20 @@ function ChatPage({ user, getChatSession, handleSendMessage, inputMessage, setIn
   return (
     <div className="w-full h-[80vh] md:h-[85vh] flex items-center justify-center relative">
       <div className="w-full max-w-3xl h-full flex flex-col bg-gradient-to-br from-[#2d1e4f] to-[#1a1333] rounded-3xl shadow-2xl border border-white/10 p-0 md:p-4 relative">
-        <button
-          className="absolute top-4 right-4 z-20 px-3 py-1 rounded bg-pink-700 hover:bg-pink-800 text-white text-xs font-semibold"
-          onClick={() => onShowChatMemory(character.id)}
-        >
-          Chat Memory
-        </button>
+        <div className="absolute top-4 right-4 z-20 flex gap-2">
+          <button
+            className="px-3 py-1 rounded bg-pink-700 hover:bg-pink-800 text-white text-xs font-semibold"
+            onClick={() => onShowChatMemory(character.id)}
+          >
+            Chat Memory
+          </button>
+          <button
+            className="px-3 py-1 rounded bg-pink-600 hover:bg-pink-700 text-white text-xs font-semibold"
+            onClick={() => openCharacterProfile && openCharacterProfile(character)}
+          >
+            Character Profile
+          </button>
+        </div>
         <Chat
           user={user}
           activeCharacter={character}

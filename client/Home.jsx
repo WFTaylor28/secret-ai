@@ -18,7 +18,7 @@ const Home = ({ onStartChat, onCreateCharacter, publicCharacters, setActiveChara
           }}
           style={{ cursor: 'pointer' }}
         >
-          <div className="relative h-56 overflow-hidden">
+          <div className="relative h-96 overflow-hidden">
             <img
               src={character.image}
               alt={character.name}

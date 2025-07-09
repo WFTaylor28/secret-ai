@@ -1,6 +1,6 @@
 import React from "react";
 
-const MyChats = ({ user, chatSessions, onContinueChat, onDeleteChat }) => (
+const MyChats = ({ user, chatSessions, onContinueChat, onDeleteChat, onShowChatMemory, openCharacterProfile }) => (
   <section>
     <h2 className="text-3xl font-bold mb-6">My Chats (Total: {chatSessions.length})</h2>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -27,12 +27,26 @@ const MyChats = ({ user, chatSessions, onContinueChat, onDeleteChat }) => (
                 <span className="italic text-gray-500">No messages yet</span>
               )}
             </div>
-            <div className="flex justify-between items-center mt-2">
+            <div className="flex gap-2 items-center mt-2">
               <button
                 className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-white font-medium transition-all"
                 onClick={() => onContinueChat(character.id)}
               >
                 Continue
+              </button>
+              <button
+                className="bg-purple-700 hover:bg-purple-800 px-3 py-2 rounded text-white text-sm"
+                onClick={() => onShowChatMemory && onShowChatMemory(character.id)}
+                title="Chat Memory"
+              >
+                Chat Memory
+              </button>
+              <button
+                className="bg-pink-600 hover:bg-pink-700 px-3 py-2 rounded text-white text-sm"
+                onClick={() => openCharacterProfile && openCharacterProfile(character)}
+                title="View Character Profile"
+              >
+                Character Profile
               </button>
               <button
                 className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded text-white text-sm"
