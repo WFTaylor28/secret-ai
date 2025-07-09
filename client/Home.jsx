@@ -1,15 +1,22 @@
 import React from "react";
 
-const Home = ({ onStartChat, onCreateCharacter, publicCharacters, setActiveCharacter }) => (
+const Home = ({ onStartChat, onCreateCharacter, publicCharacters, setActiveCharacter, openCharacterProfile }) => (
   <section className="mt-12 animate-fade-in">
     <h2 className="text-4xl font-extrabold mb-8 text-center bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent drop-shadow-lg">
-      Explore Public Characters
+      Explore Public Characters 🚀
     </h2>
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
       {publicCharacters.map((character) => (
         <div
           key={character.id}
           className={`backdrop-blur-md bg-white/10 border border-white/20 shadow-xl transition-all duration-500 ease-in-out rounded-3xl overflow-hidden shadow-2xl hover:scale-105 hover:shadow-pink-500/30 group transition-transform duration-300`}
+          onClick={e => {
+            // Only open profile if not clicking the chat button
+            if (e.target.tagName !== 'BUTTON' && openCharacterProfile) {
+              openCharacterProfile(character);
+            }
+          }}
+          style={{ cursor: 'pointer' }}
         >
           <div className="relative h-56 overflow-hidden">
             <img
@@ -31,7 +38,8 @@ const Home = ({ onStartChat, onCreateCharacter, publicCharacters, setActiveChara
               {character.description}
             </p>
             <button
-              onClick={() => {
+              onClick={e => {
+                e.stopPropagation();
                 onStartChat();
                 setActiveCharacter(character);
               }}

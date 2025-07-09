@@ -1,3 +1,6 @@
+// Character Profile modal state
+  const [showCharacterProfile, setShowCharacterProfile] = useState(false);
+  const [profileCharacter, setProfileCharacter] = useState(null);
 import React, { useState } from "react";
 import { Routes, Route, useNavigate, useParams } from "react-router-dom";
 import Home from "./Home";
@@ -387,6 +390,12 @@ const App = () => {
     setShowChatMemory(true);
   };
 
+  // Handler to open character profile modal
+  const openCharacterProfile = (character) => {
+    setProfileCharacter(character);
+    setShowCharacterProfile(true);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1a1333] via-[#2d1e4f] to-[#0f051d] text-white flex flex-col">
       {/* Top Navigation Bar */}
@@ -511,6 +520,7 @@ const App = () => {
                 onCreateCharacter={goCreate}
                 publicCharacters={publicCharacters}
                 setActiveCharacter={(character) => openChatWithCharacter(character.id)}
+                openCharacterProfile={openCharacterProfile}
               />
             }
           />
@@ -561,19 +571,50 @@ const App = () => {
             ) : (
               <ul className="space-y-2">
                 {user.characters.map((char) => (
-                  <li key={char.id} className="flex items-center justify-between bg-white/5 rounded-lg px-4 py-2">
+                  <li
+                    key={char.id}
+                    className="flex items-center justify-between bg-white/5 rounded-lg px-4 py-2 cursor-pointer group"
+                    onClick={() => openCharacterProfile(char)}
+                  >
                     <div className="flex items-center gap-3">
-                      <img src={char.image} alt={char.name} className="w-10 h-10 rounded-full object-cover border border-white/10" />
+                      <img src={char.image} alt={char.name} className="w-10 h-10 rounded-full object-cover border border-white/10 group-hover:ring-2 group-hover:ring-pink-400 transition" />
                       <div>
                         <div className="font-semibold text-white">{char.name}</div>
                         <div className="text-xs text-white/60">{char.description}</div>
                       </div>
                     </div>
-                    <button className="px-3 py-1 rounded bg-purple-700 hover:bg-purple-800 text-white text-xs font-semibold" onClick={() => setEditCharacter(char)}>Edit</button>
+                    <button
+                      className="px-3 py-1 rounded bg-purple-700 hover:bg-purple-800 text-white text-xs font-semibold"
+                      onClick={e => { e.stopPropagation(); setEditCharacter(char); }}
+                    >
+                      Edit
+                    </button>
                   </li>
                 ))}
               </ul>
             )}
+          </div>
+        </Modal>
+      )}
+
+      {/* Character Profile Modal */}
+      {showCharacterProfile && profileCharacter && (
+        <Modal onClose={() => setShowCharacterProfile(false)} title={profileCharacter.name + "'s Profile"}>
+          <div className="space-y-4 text-left">
+            <div className="flex items-center gap-4">
+              <img src={profileCharacter.image} alt={profileCharacter.name} className="w-20 h-20 rounded-2xl object-cover border border-white/20" />
+              <div>
+                <div className="text-xl font-bold">{profileCharacter.name}</div>
+                <div className="text-sm text-white/70">{profileCharacter.description}</div>
+              </div>
+            </div>
+            {profileCharacter.backstory && <div><span className="font-semibold">Backstory:</span> <span className="text-white/80">{profileCharacter.backstory}</span></div>}
+            {profileCharacter.personality && <div><span className="font-semibold">Personality:</span> <span className="text-white/80">{profileCharacter.personality}</span></div>}
+            {profileCharacter.motivations && <div><span className="font-semibold">Motivations:</span> <span className="text-white/80">{profileCharacter.motivations}</span></div>}
+            {profileCharacter.values && <div><span className="font-semibold">Values:</span> <span className="text-white/80">{profileCharacter.values}</span></div>}
+            {profileCharacter.accent && <div><span className="font-semibold">Accent:</span> <span className="text-white/80">{profileCharacter.accent}</span></div>}
+            {profileCharacter.scenario && <div><span className="font-semibold">Scenario:</span> <span className="text-white/80">{profileCharacter.scenario}</span></div>}
+            {profileCharacter.firstMessage && <div><span className="font-semibold">First Message:</span> <span className="text-white/80">{profileCharacter.firstMessage}</span></div>}
           </div>
         </Modal>
       )}
@@ -653,14 +694,14 @@ const App = () => {
       {showBlockedContent && (
         <Modal onClose={() => setShowBlockedContent(false)} title="Blocked Content Policy">
           <div className="max-h-[70vh] overflow-y-auto text-left text-white/90 space-y-4 px-1 md:px-4">
-            <h3 className="text-xl font-bold mb-2">Blocked Content Policy</h3>
-            <p>SecretAI strictly prohibits the following types of content:</p>
-            <ul className="list-disc pl-6 space-y-2 text-white/80">
+            <span>SecretAI strictly prohibits the following types of content:</span>
+            <ul className="list-disc pl-6 space-y-2 text-white">
               <li>Sexual content involving minors (real or fictional), including any form of child sexual abuse material (CSAM).</li>
               <li>Non-consensual sexual content, including simulated or implied non-consensual acts.</li>
               <li>Sexual violence, incest, bestiality, necrophilia, or any other illegal or highly offensive material.</li>
               <li>Content that promotes hate, violence, or discrimination against individuals or groups based on race, ethnicity, religion, gender, sexual orientation, disability, or any other protected status.</li>
               <li>Content that encourages or depicts self-harm, suicide, or dangerous activities.</li>
+              <li>Using real people’s or celebrities’ images or likenesses when creating characters.</li>
               <li>Any material that violates applicable laws or regulations.</li>
             </ul>
             <span className="text-xs text-white/60 block mt-2">SecretAI reserves the right to remove content and/or ban users who violate these policies.</span>
@@ -673,7 +714,6 @@ const App = () => {
       {showTerms && (
         <Modal onClose={() => setShowTerms(false)} title="Terms of Service">
           <div className="max-h-[70vh] overflow-y-auto text-left text-white/90 space-y-4 px-1 md:px-4">
-            <h3 className="text-xl font-bold mb-2">Terms of Service</h3>
             <p>Welcome to SecretAI! Please read these Terms of Service carefully before using our website and services.</p>
             <ol className="list-decimal pl-6 space-y-2">
               <li><strong>Acceptance of Terms:</strong> By accessing or using SecretAI, you agree to be bound by these Terms of Service and our Privacy Policy.</li>
@@ -684,17 +724,6 @@ const App = () => {
               <li><strong>Intellectual Property:</strong> All content and software on SecretAI is owned by us or our licensors. Do not copy, modify, or distribute without permission.</li>
               <li><strong>Disclaimer:</strong> SecretAI is provided "as is" without warranties of any kind. We do not guarantee accuracy or availability.</li>
               <li><strong>Limitation of Liability:</strong> We are not liable for any damages arising from your use of SecretAI.</li>
-              <li><strong>Blocked Content Policy:</strong> The following types of content are strictly prohibited on SecretAI:
-                <ul className="list-disc pl-6 mt-2 space-y-1 text-white/80">
-                  <li>Sexual content involving minors (real or fictional), including any form of child sexual abuse material (CSAM).</li>
-                  <li>Non-consensual sexual content, including simulated or implied non-consensual acts.</li>
-                  <li>Sexual violence, incest, bestiality, necrophilia, or any other illegal or highly offensive material.</li>
-                  <li>Content that promotes hate, violence, or discrimination against individuals or groups based on race, ethnicity, religion, gender, sexual orientation, disability, or any other protected status.</li>
-                  <li>Content that encourages or depicts self-harm, suicide, or dangerous activities.</li>
-                  <li>Any material that violates applicable laws or regulations.</li>
-                </ul>
-                <span className="text-xs text-white/60 block mt-2">SecretAI reserves the right to remove content and/or ban users who violate these policies.</span>
-              </li>
               <li><strong>Changes to Terms:</strong> We may update these Terms at any time. Continued use of SecretAI means you accept the new Terms.</li>
               <li><strong>Contact:</strong> For questions, contact us at support@secretai.com.</li>
             </ol>
@@ -708,9 +737,7 @@ const App = () => {
       {showPrivacy && (
         <Modal onClose={() => setShowPrivacy(false)} title="Privacy Policy">
           <div className="space-y-4 text-left text-white/90">
-            <p>
-              <strong>Privacy Policy</strong>
-            </p>
+            <p>Your privacy is important to us.</p>
             <ul className="list-disc pl-6 space-y-2">
               <li>Your data is never sold or shared with third parties.</li>
               <li>Conversations and character data are stored securely and used only to provide the service.</li>
