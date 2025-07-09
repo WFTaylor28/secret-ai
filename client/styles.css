@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Style for AI action/emote text (e.g. *action*) */
+.ai-action, em.ai-action {
+  color: #6b7280 !important; /* Tailwind gray-500 */
+  font-style: italic !important;
+}
+.user-action, em.user-action {
+  color: #6b7280 !important; /* Tailwind gray-500 for user emotes, matches AI */
+  font-style: italic !important;
+}

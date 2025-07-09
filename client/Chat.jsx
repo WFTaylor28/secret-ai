@@ -1,13 +1,16 @@
 import React from "react";
 // Helper to render chat message formatting (actions/expressions/thoughts)
 function renderFormattedMessage(text, isUser) {
-  // *action* or *expression* to <em>
+  // *action* or **action** to <em>
   // For user, use a different class for <em>
-  if (isUser) {
-    text = text.replace(/\*(.+?)\*/g, '<em class="user-action">$1</em>');
-  } else {
-    text = text.replace(/\*(.+?)\*/g, '<em class="ai-action">$1</em>');
-  }
+  // Robustly match both *action* and **action** (not followed by colon), hide asterisks
+  // Handles overlapping and nested asterisks, and does not match inside words
+  const emoteRegex = /(^|\s)(\*\*([^*][^*]*?)\*\*|\*([^*][^*]*?)\*)(?!:)/g;
+  text = text.replace(emoteRegex, (match, pre, _all, double, single) => {
+    const emoteText = double || single;
+    const cls = isUser ? 'user-action' : 'ai-action';
+    return `${pre}<em class=\"${cls}\">${emoteText}</em>`;
+  });
   // [brackets] to <span class="action">
   text = text.replace(/\[(.+?)\]/g, '<span class="action">[$1]</span>');
   return { __html: text };

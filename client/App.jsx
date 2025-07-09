@@ -104,9 +104,11 @@ const App = () => {
 
   // Chat UI state (for /chat/:characterId)
   const [inputMessage, setInputMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
+  // Per-chat isTyping: { [characterId]: true/false }
+  const [isTyping, setIsTyping] = useState({});
   const [error, setError] = useState("");
-  const [pendingAI, setPendingAI] = useState(null); // For animating AI reply
+  // Per-chat pendingAI: { [characterId]: { text, isUser, thinking } }
+  const [pendingAI, setPendingAI] = useState({});
 
   // Handle input changes in character form
   const handleInputChange = (e) => {
@@ -178,9 +180,9 @@ const App = () => {
       )
     );
     setInputMessage("");
-    setIsTyping(true);
+    setIsTyping((prev) => ({ ...prev, [characterId]: true }));
     setError("");
-    setPendingAI(null);
+    setPendingAI((prev) => ({ ...prev, [characterId]: null }));
 
     try {
       const isLocal =
@@ -191,7 +193,7 @@ const App = () => {
         : "https://secret-ai-uz8m.onrender.com/chat";
 
       // Show ... bubble while waiting
-      setPendingAI({ text: "", isUser: false, thinking: true });
+      setPendingAI((prev) => ({ ...prev, [characterId]: { text: "", isUser: false, thinking: true } }));
 
       // Prepare chat history for backend (last 8 messages)
       let sessionMessages = session ? session.messages : [];
@@ -213,22 +215,44 @@ const App = () => {
           userId: user.id,
         }),
       });
-      if (!response.ok) throw new Error("API error");
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonErr) {
+        setError("AI returned an invalid response. Please try again.");
+        setPendingAI((prev) => ({ ...prev, [characterId]: null }));
+        // Show error in chat
+        setChatSessions((prev) =>
+          prev.map((s) =>
+            s.characterId === characterId
+              ? { ...s, messages: [...s.messages, { text: "[AI Error: Invalid response]", isUser: false, error: true }], lastActive: new Date() }
+              : s
+          )
+        );
+        return;
+      }
 
       // Defensive: check for valid reply
       const fullText = (data && typeof data.reply === "string") ? data.reply.trim() : "";
       if (!fullText) {
         setError("AI did not return a response. Please try again.");
-        setPendingAI(null);
+        setPendingAI((prev) => ({ ...prev, [characterId]: null }));
+        // Show error in chat
+        setChatSessions((prev) =>
+          prev.map((s) =>
+            s.characterId === characterId
+              ? { ...s, messages: [...s.messages, { text: "[AI Error: No response from AI]", isUser: false, error: true }], lastActive: new Date() }
+              : s
+          )
+        );
         return;
       }
 
       // Animate AI reply letter by letter
       let i = 0;
-      setPendingAI({ text: "", isUser: false, thinking: false });
+      setPendingAI((prev) => ({ ...prev, [characterId]: { text: "", isUser: false, thinking: false } }));
       const typeWriter = () => {
-        setPendingAI({ text: fullText.slice(0, i + 1), isUser: false, thinking: false });
+        setPendingAI((prev) => ({ ...prev, [characterId]: { text: fullText.slice(0, i + 1), isUser: false, thinking: false } }));
         if (i < fullText.length - 1) {
           i++;
           setTimeout(typeWriter, 18); // typing speed
@@ -240,7 +264,7 @@ const App = () => {
                 : s
             )
           );
-          setPendingAI(null);
+        setPendingAI((prev) => ({ ...prev, [characterId]: null }));
         }
       };
       if (fullText.length > 0) {
@@ -248,9 +272,17 @@ const App = () => {
       }
     } catch (err) {
       setError("Failed to get a response from AI. Please try again.");
-      setPendingAI(null);
+          setPendingAI((prev) => ({ ...prev, [characterId]: null }));
+      // Show error in chat
+      setChatSessions((prev) =>
+        prev.map((s) =>
+          s.characterId === characterId
+            ? { ...s, messages: [...s.messages, { text: `[AI Error: ${err?.message || 'Network or server error'}]`, isUser: false, error: true }], lastActive: new Date() }
+            : s
+        )
+      );
     } finally {
-      setIsTyping(false);
+      setIsTyping((prev) => ({ ...prev, [characterId]: false }));
     }
   };
 
@@ -319,6 +351,9 @@ const App = () => {
       }
       return prev;
     });
+    // Clear pendingAI and isTyping for all other chats except the one being opened
+    setPendingAI((prev) => ({ [characterId]: prev[characterId] || null }));
+    setIsTyping((prev) => ({ [characterId]: prev[characterId] || false }));
     navigate(`/chat/${characterId}`);
   };
 
@@ -722,8 +757,8 @@ function ChatPage({ user, getChatSession, handleSendMessage, inputMessage, setIn
           inputMessage={inputMessage}
           setInputMessage={setInputMessage}
           handleSendMessage={(e) => handleSendMessage(Number(characterId), e)}
-          isTyping={isTyping}
-          pendingAI={pendingAI}
+          isTyping={isTyping[character.id] || false}
+          pendingAI={pendingAI[character.id] || null}
         />
       </div>
     </div>
