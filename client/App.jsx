@@ -4,6 +4,7 @@ import Home from "./Home";
 import CreateCharacter from "./CreateCharacter";
 import Chat from "./Chat";
 import MyChats from "./MyChats";
+import TermsPage from "./TermsPage";
 
 // Glassmorphism and animation helpers
 const glass = "backdrop-blur-md bg-white/10 border border-white/20 shadow-xl";
@@ -23,11 +24,12 @@ const App = () => {
   const [showPrivacy, setShowPrivacy] = useState(false);
   // Modal states
   const [showTerms, setShowTerms] = useState(false);
+  const [showBlockedContent, setShowBlockedContent] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showBilling, setShowBilling] = useState(false);
-  // State for hamburger/vertical dots menu
   const [showMenu, setShowMenu] = useState(false);
+  const [showFAQ, setShowFAQ] = useState(false); // <-- Move this here with other modal states
   // Mock user data
   const [user] = useState({
     id: 1,
@@ -498,7 +500,7 @@ const App = () => {
         </header>
       )}
 
-      {/* Main Content */}
+      {/* Main Content & Routes */}
       <main className={`flex-1 w-full ${window.location.pathname.startsWith('/chat/') ? 'flex justify-center items-center bg-gradient-to-br from-[#1a1333] via-[#2d1e4f] to-[#0f051d] p-0' : 'container mx-auto px-4 py-8'}`}>
         <Routes>
           <Route
@@ -547,6 +549,7 @@ const App = () => {
               onShowChatMemory={handleShowChatMemory}
             />}
           />
+          {/* Removed /terms route, Terms will be a modal instead */}
         </Routes>
       </main>
       {/* My Characters Modal */}
@@ -623,39 +626,83 @@ const App = () => {
         </Modal>
       )}
 
-      {/* Footer */}
-      <footer className="bg-gradient-to-r from-purple-900/80 to-indigo-900/80 py-8 mt-12 shadow-inner animate-fade-in">
-        <div className="container mx-auto px-4 text-center text-white/70 text-base">
-          <p className="mb-2">&copy; 2025 SecretAI. All rights reserved.</p>
-          <div className="mt-2 space-x-6 flex flex-wrap justify-center items-center gap-4">
-            <button
-              className="hover:text-pink-400 transition-colors font-medium"
-              onClick={() => setShowTerms(true)}
-            >
-              Terms
-            </button>
-            {/* Privacy and Contact as buttons for valid JSX */}
+      {/* --- Global Footer --- */}
+      <footer className="w-full bg-gradient-to-r from-purple-900/80 to-indigo-900/80 py-8 mt-12 shadow-inner animate-fade-in border-t border-white/10">
+        <div className="container mx-auto px-4 text-center text-white/80 text-base flex flex-col md:flex-row md:justify-between md:items-center gap-6">
+          {/* Left: Brand & Copyright */}
+          <div className="flex flex-col items-center md:items-start gap-2">
+            <span className="text-2xl font-extrabold bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent drop-shadow-lg select-none">SecretAI</span>
+            <span className="text-xs text-white/60">&copy; 2025 SecretAI. All rights reserved.</span>
+          </div>
+          {/* Center: Navigation Links */}
+          <div className="flex flex-wrap justify-center items-center gap-4 md:gap-8">
+            <button className="hover:text-pink-400 transition-colors font-medium" onClick={() => setShowTerms(true)}>Terms</button>
+            <button className="hover:text-pink-400 transition-colors font-medium" onClick={() => setShowBlockedContent(true)}>Blocked Content</button>
             <button className="hover:text-pink-400 transition-colors font-medium" onClick={() => setShowPrivacy(true)}>Privacy</button>
-            <button className="hover:text-pink-400 transition-colors font-medium">Contact</button>
+            <button className="hover:text-pink-400 transition-colors font-medium" onClick={() => setShowFAQ(true)}>FAQ</button>
+          </div>
+          {/* Right: Quick Info */}
+          <div className="flex flex-col items-center md:items-end gap-2 text-xs text-white/60">
+            <span>Made with <span className="text-pink-400">♥</span> by the SecretAI Team</span>
+            <span>Last updated: July 9, 2025</span>
           </div>
         </div>
       </footer>
-      {/* Terms Modal */}
-      {showTerms && (
-        <Modal onClose={() => setShowTerms(false)} title="Terms of Service">
-          <div className="space-y-4 text-left text-white/90">
-            <p>
-              Welcome to SecretAI. By using this service, you agree to the following terms:
-            </p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>Any character created or represented as underage will be taken down immediately.</li>
-              <li>Do not create or share illegal, harmful, or offensive content.</li>
-              <li>Respect the privacy and rights of others.</li>
-              <li>We reserve the right to remove any content or account at our discretion.</li>
+
+      {/* Blocked Content Modal */}
+      {showBlockedContent && (
+        <Modal onClose={() => setShowBlockedContent(false)} title="Blocked Content Policy">
+          <div className="max-h-[70vh] overflow-y-auto text-left text-white/90 space-y-4 px-1 md:px-4">
+            <h3 className="text-xl font-bold mb-2">Blocked Content Policy</h3>
+            <p>SecretAI strictly prohibits the following types of content:</p>
+            <ul className="list-disc pl-6 space-y-2 text-white/80">
+              <li>Sexual content involving minors (real or fictional), including any form of child sexual abuse material (CSAM).</li>
+              <li>Non-consensual sexual content, including simulated or implied non-consensual acts.</li>
+              <li>Sexual violence, incest, bestiality, necrophilia, or any other illegal or highly offensive material.</li>
+              <li>Content that promotes hate, violence, or discrimination against individuals or groups based on race, ethnicity, religion, gender, sexual orientation, disability, or any other protected status.</li>
+              <li>Content that encourages or depicts self-harm, suicide, or dangerous activities.</li>
+              <li>Any material that violates applicable laws or regulations.</li>
             </ul>
+            <span className="text-xs text-white/60 block mt-2">SecretAI reserves the right to remove content and/or ban users who violate these policies.</span>
+            <p className="text-xs text-white/60 mt-4">Last updated: July 9, 2025</p>
           </div>
         </Modal>
       )}
+
+      {/* Terms Modal */}
+      {showTerms && (
+        <Modal onClose={() => setShowTerms(false)} title="Terms of Service">
+          <div className="max-h-[70vh] overflow-y-auto text-left text-white/90 space-y-4 px-1 md:px-4">
+            <h3 className="text-xl font-bold mb-2">Terms of Service</h3>
+            <p>Welcome to SecretAI! Please read these Terms of Service carefully before using our website and services.</p>
+            <ol className="list-decimal pl-6 space-y-2">
+              <li><strong>Acceptance of Terms:</strong> By accessing or using SecretAI, you agree to be bound by these Terms of Service and our Privacy Policy.</li>
+              <li><strong>Use of Service:</strong> You may use SecretAI to create, chat, and interact with AI characters for personal, non-commercial purposes only.</li>
+              <li><strong>User Content:</strong> You are responsible for any content you create or share. Do not upload or share illegal, harmful, or offensive material.</li>
+              <li><strong>Account Security:</strong> You are responsible for maintaining the confidentiality of your account information.</li>
+              <li><strong>Prohibited Activities:</strong> You may not use SecretAI for any unlawful purpose or to harass, abuse, or harm others.</li>
+              <li><strong>Intellectual Property:</strong> All content and software on SecretAI is owned by us or our licensors. Do not copy, modify, or distribute without permission.</li>
+              <li><strong>Disclaimer:</strong> SecretAI is provided "as is" without warranties of any kind. We do not guarantee accuracy or availability.</li>
+              <li><strong>Limitation of Liability:</strong> We are not liable for any damages arising from your use of SecretAI.</li>
+              <li><strong>Blocked Content Policy:</strong> The following types of content are strictly prohibited on SecretAI:
+                <ul className="list-disc pl-6 mt-2 space-y-1 text-white/80">
+                  <li>Sexual content involving minors (real or fictional), including any form of child sexual abuse material (CSAM).</li>
+                  <li>Non-consensual sexual content, including simulated or implied non-consensual acts.</li>
+                  <li>Sexual violence, incest, bestiality, necrophilia, or any other illegal or highly offensive material.</li>
+                  <li>Content that promotes hate, violence, or discrimination against individuals or groups based on race, ethnicity, religion, gender, sexual orientation, disability, or any other protected status.</li>
+                  <li>Content that encourages or depicts self-harm, suicide, or dangerous activities.</li>
+                  <li>Any material that violates applicable laws or regulations.</li>
+                </ul>
+                <span className="text-xs text-white/60 block mt-2">SecretAI reserves the right to remove content and/or ban users who violate these policies.</span>
+              </li>
+              <li><strong>Changes to Terms:</strong> We may update these Terms at any time. Continued use of SecretAI means you accept the new Terms.</li>
+              <li><strong>Contact:</strong> For questions, contact us at support@secretai.com.</li>
+            </ol>
+            <p className="text-xs text-white/60 mt-4">Last updated: July 9, 2025</p>
+          </div>
+        </Modal>
+      )}
+
 
       {/* Privacy Modal */}
       {showPrivacy && (
@@ -703,6 +750,26 @@ const App = () => {
           </div>
         </Modal>
       )}
+
+      {/* FAQ Modal */}
+      {showFAQ && (
+        <Modal onClose={() => setShowFAQ(false)} title="FAQ">
+          <div className="space-y-6 text-left text-white/90">
+            <div>
+              <h3 className="font-bold mb-1">Are the bot and my chat private?</h3>
+              <p>Yes. Your conversations and created bots are private to your account. We do not share your data or chats with anyone, and your data is never sold or used for advertising.</p>
+            </div>
+            <div>
+              <h3 className="font-bold mb-1">How do we contact you for recommendations and suggestions?</h3>
+              <p>You can email us at <a href="mailto:support@secretai.com" className="text-pink-400 underline">support@secretai.com</a> for any feedback, recommendations, or suggestions. We value your input!</p>
+            </div>
+            <div>
+              <h3 className="font-bold mb-1">How do I cancel my subscription?</h3>
+              <p>Go to <b>Account &gt; Billing &gt; Cancel Subscription</b> in the menu. Then follow the prompts to confirm your cancellation.</p>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
@@ -739,7 +806,7 @@ function ChatPage({ user, getChatSession, handleSendMessage, inputMessage, setIn
     <div className="w-full h-[80vh] md:h-[85vh] flex items-center justify-center relative">
       <div className="w-full max-w-3xl h-full flex flex-col bg-gradient-to-br from-[#2d1e4f] to-[#1a1333] rounded-3xl shadow-2xl border border-white/10 p-0 md:p-4 relative">
         <button
-          className="absolute top-4 right-4 z-20 px-3 py-1 rounded bg-pink-700 hover:bg-pink-800 text-white text-xs font-semibold shadow"
+          className="absolute top-4 right-4 z-20 px-3 py-1 rounded bg-pink-700 hover:bg-pink-800 text-white text-xs font-semibold"
           onClick={() => onShowChatMemory(character.id)}
         >
           Chat Memory
