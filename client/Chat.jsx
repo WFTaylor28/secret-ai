@@ -47,14 +47,8 @@ const Chat = ({
   pendingAI,
 }) => {
   // Ref for the message list container
+  const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
-
-  // Scroll to bottom when messages or pendingAI change
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages, pendingAI && pendingAI.text]);
 
   return (
     <section>
@@ -105,7 +99,10 @@ const Chat = ({
                 <h4 className="font-semibold">{activeCharacter.name}</h4>
               </div>
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto mb-4 space-y-4 pr-2 max-h-[420px]">
+              <div
+                className="flex-1 overflow-y-auto mb-4 space-y-4 pr-2 max-h-[420px]"
+                ref={messagesContainerRef}
+              >
                 {messages.map((msg, index) => (
                   <div
                     key={index}
