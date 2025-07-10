@@ -184,6 +184,7 @@ const App = () => {
   const handleSendMessage = async (characterId, e) => {
     e.preventDefault();
     if (!inputMessage.trim()) return;
+    if (isTyping[characterId]) return; // Prevent sending while AI is typing
 
     // Find or create chat session
     let session = chatSessions.find((s) => s.characterId === characterId);
@@ -290,7 +291,8 @@ const App = () => {
                 : s
             )
           );
-        setPendingAI((prev) => ({ ...prev, [characterId]: null }));
+          setPendingAI((prev) => ({ ...prev, [characterId]: null }));
+          setIsTyping((prev) => ({ ...prev, [characterId]: false })); // <-- move here
         }
       };
       if (fullText.length > 0) {
@@ -298,7 +300,7 @@ const App = () => {
       }
     } catch (err) {
       setError("Failed to get a response from AI. Please try again.");
-          setPendingAI((prev) => ({ ...prev, [characterId]: null }));
+      setPendingAI((prev) => ({ ...prev, [characterId]: null }));
       // Show error in chat
       setChatSessions((prev) =>
         prev.map((s) =>
@@ -307,8 +309,7 @@ const App = () => {
             : s
         )
       );
-    } finally {
-      setIsTyping((prev) => ({ ...prev, [characterId]: false }));
+      setIsTyping((prev) => ({ ...prev, [characterId]: false })); // keep in catch
     }
   };
 
