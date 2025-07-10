@@ -135,6 +135,10 @@ const App = () => {
   // Per-chat pendingAI: { [characterId]: { text, isUser, thinking } }
   const [pendingAI, setPendingAI] = useState({});
 
+  // State for delete confirmation modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [characterToDelete, setCharacterToDelete] = useState(null);
+
   // Handle input changes in character form
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -389,9 +393,36 @@ const App = () => {
     setChatSessions((prev) => prev.filter((s) => s.characterId !== characterId));
   };
 
-  // Delete a created character
+  // Delete a created character or a built-in character
   const handleDeleteCharacter = (characterId) => {
     setCreatedCharacters((prev) => prev.filter((char) => char.id !== characterId));
+    // Remove from user.characters if present (for built-in/mock user)
+    if (user && user.characters) {
+      user.characters = user.characters.filter((char) => char.id !== characterId);
+    }
+  };
+
+  // Handler to request delete (opens modal)
+  const requestDeleteCharacter = (character) => {
+    setCharacterToDelete(character);
+    setShowDeleteModal(true);
+  };
+
+  // Handler to confirm delete
+  const confirmDeleteCharacter = () => {
+    if (characterToDelete) {
+      setCreatedCharacters((prev) => prev.filter((char) => char.id !== characterToDelete.id));
+      if (user && user.characters) {
+        user.characters = user.characters.filter((char) => char.id !== characterToDelete.id);
+      }
+    }
+    setShowDeleteModal(false);
+    setCharacterToDelete(null);
+  };
+  // Handler to cancel delete
+  const cancelDeleteCharacter = () => {
+    setShowDeleteModal(false);
+    setCharacterToDelete(null);
   };
 
   // Get chat session for a character
@@ -466,11 +497,25 @@ const App = () => {
   // Save edited character
   const handleSaveEditCharacter = (e) => {
     e.preventDefault();
-    setCreatedCharacters((prev) =>
-      prev.map((char) =>
-        char.id === editCharacterForm.id ? { ...editCharacterForm } : char
-      )
-    );
+    if (!editCharacterForm) return;
+    // Try to update in createdCharacters first
+    let updated = false;
+    setCreatedCharacters((prev) => {
+      if (prev.some((char) => char.id === editCharacterForm.id)) {
+        updated = true;
+        return prev.map((char) =>
+          char.id === editCharacterForm.id ? { ...editCharacterForm } : char
+        );
+      }
+      return prev;
+    });
+    // If not found in createdCharacters, update in user.characters
+    if (!updated && user && user.characters) {
+      const idx = user.characters.findIndex((char) => char.id === editCharacterForm.id);
+      if (idx !== -1) {
+        user.characters[idx] = { ...editCharacterForm };
+      }
+    }
     setEditCharacter(null);
   };
 
@@ -668,7 +713,8 @@ const App = () => {
               <MyCharacters
                 user={user}
                 onEditCharacter={handleEditCharacter}
-                onDeleteCharacter={handleDeleteCharacter}
+                onDeleteCharacter={requestDeleteCharacter}
+                onChatWithCharacter={openChatWithCharacter}
               />
             }
           />
@@ -980,6 +1026,29 @@ const App = () => {
               </button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {/* Delete Character Confirmation Modal */}
+      {showDeleteModal && characterToDelete && (
+        <Modal onClose={cancelDeleteCharacter} title="Delete Character">
+          <div className="space-y-4 text-center">
+            <p>Are you sure you want to delete <span className="font-bold text-pink-400">{characterToDelete.name}</span>?</p>
+            <div className="flex justify-center gap-6 mt-6">
+              <button
+                className="bg-red-700 hover:bg-red-800 px-6 py-2 rounded-lg text-white font-semibold transition-all"
+                onClick={confirmDeleteCharacter}
+              >
+                Yes
+              </button>
+              <button
+                className="bg-gray-700 hover:bg-gray-800 px-6 py-2 rounded-lg text-white font-semibold transition-all"
+                onClick={cancelDeleteCharacter}
+              >
+                No
+              </button>
+            </div>
+          </div>
         </Modal>
       )}
     </div>
