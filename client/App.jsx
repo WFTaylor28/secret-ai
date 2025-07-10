@@ -5,6 +5,8 @@ import CreateCharacter from "./CreateCharacter";
 import Chat from "./Chat";
 import MyChats from "./MyChats";
 import TermsPage from "./TermsPage";
+import Modal from "./Modal";
+import SearchResults from "./SearchResults";
 
 // Glassmorphism and animation helpers
 const glass = "backdrop-blur-md bg-white/10 border border-white/20 shadow-xl";
@@ -83,28 +85,7 @@ const App = () => {
     ],
   });
 
-
-  // Chat sessions: [{ characterId, messages: [], lastActive, ... }]
-  const [chatSessions, setChatSessions] = useState([]);
-
-  // Filtered characters for search (public only, includes all fields and all characters)
-  const filteredCharacters = [...user.characters, ...createdCharacters]
-    .filter((char) => char.isPublic)
-    .filter((char) => {
-      const query = searchQuery.toLowerCase();
-      return (
-        char.name?.toLowerCase().includes(query) ||
-        char.description?.toLowerCase().includes(query) ||
-        char.backstory?.toLowerCase().includes(query) ||
-        char.personality?.toLowerCase().includes(query) ||
-        char.motivations?.toLowerCase().includes(query) ||
-        char.values?.toLowerCase().includes(query) ||
-        char.accent?.toLowerCase().includes(query) ||
-        char.scenario?.toLowerCase().includes(query)
-      );
-    });
-
-  // Character creation form state
+  // Character creation form state (move this up)
   const [newCharacter, setNewCharacter] = useState({
     name: "",
     image: null,
@@ -119,9 +100,33 @@ const App = () => {
     nsfw: false,
   });
 
+  // Chat sessions: [{ characterId, messages: [], lastActive, ... }]
+  const [chatSessions, setChatSessions] = useState([]);
+
   // Track created characters in state
   const [createdCharacters, setCreatedCharacters] = useState([]);
 
+  // Combine all characters
+  const allCharacters = [...user.characters, ...createdCharacters];
+
+  // Filtered characters (include new and created)
+  const publicCharacters = allCharacters.filter((character) => character.isPublic);
+  const privateCharacters = allCharacters.filter((character) => !character.isPublic);
+
+  // Filtered characters for search (improved: includes all fields and all characters)
+  const filteredCharacters = allCharacters.filter((character) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      character.name?.toLowerCase().includes(query) ||
+      character.description?.toLowerCase().includes(query) ||
+      character.backstory?.toLowerCase().includes(query) ||
+      character.personality?.toLowerCase().includes(query) ||
+      character.motivations?.toLowerCase().includes(query) ||
+      character.values?.toLowerCase().includes(query) ||
+      character.accent?.toLowerCase().includes(query) ||
+      character.scenario?.toLowerCase().includes(query)
+    );
+  });
 
   // Chat UI state (for /chat/:characterId)
   const [inputMessage, setInputMessage] = useState("");
@@ -329,17 +334,18 @@ const App = () => {
     return aiResponses[Math.floor(Math.random() * aiResponses.length)];
   };
 
-  // Filtered characters (include new and created)
-  const allCharacters = [...user.characters, ...createdCharacters];
-  const publicCharacters = allCharacters.filter((c) => c.isPublic);
-  const privateCharacters = allCharacters.filter((c) => !c.isPublic);
-
   const navigate = useNavigate();
 
   // Navigation handlers
   const goHome = () => navigate("/");
   const goCreate = () => navigate("/create");
   const goMyChats = () => navigate("/my-chats");
+
+  // Search bar submit handler
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    navigate("/search");
+  };
 
   // Open chat with character (from anywhere)
   const openChatWithCharacter = (characterId) => {
@@ -388,16 +394,16 @@ const App = () => {
     chatSessions.find((s) => s.characterId === characterId) || { messages: [] };
 
   // Prepare chatSessions for MyChats page
-  const myChatSessions = chatSessions.map((s) => {
-    const character = user.characters.find((c) => c.id === s.characterId);
-    const lastMessage = s.messages.length > 0 ? s.messages[s.messages.length - 1].text : null;
+  const myChatSessions = chatSessions.map((chatSession) => {
+    const character = user.characters.find((userCharacter) => userCharacter.id === chatSession.characterId);
+    const lastMessage = chatSession.messages.length > 0 ? chatSession.messages[chatSession.messages.length - 1].text : null;
     return {
       character,
       lastMessage,
-      lastActive: s.lastActive,
-      messageCount: s.messages.length,
+      lastActive: chatSession.lastActive,
+      messageCount: chatSession.messages.length,
     };
-  }).filter((s) => s.character); // Only show if character still exists
+  }).filter((session) => session.character); // Only show if character still exists
 
   // Handler to open chat memory modal for a character
   const handleShowChatMemory = (characterId) => {
@@ -451,14 +457,16 @@ const App = () => {
           </div>
           {/* Search Bar */}
           <div className="flex-1 flex justify-center mx-4">
-            <input
-              type="text"
-              placeholder="Search characters..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full max-w-xs px-4 py-2 rounded-full bg-white/20 text-white placeholder-white/60 border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-400 transition-all"
-              style={{minWidth: 180}}
-            />
+            <form onSubmit={handleSearchSubmit} className="w-full max-w-xs">
+              <input
+                type="text"
+                placeholder="Search characters..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 rounded-full bg-white/20 text-white placeholder-white/60 border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-400 transition-all"
+                style={{minWidth: 180}}
+              />
+            </form>
           </div>
           {/* Hamburger/Vertical Dots Menu */}
           <div className="relative">
@@ -558,10 +566,12 @@ const App = () => {
             path="/my-chats"
             element={
               <MyChats
-                user={{...user, openCharacterProfile, onShowChatMemory: handleShowChatMemory}}
+                user={user}
                 chatSessions={myChatSessions}
                 onContinueChat={openChatWithCharacter}
                 onDeleteChat={handleDeleteChat}
+                openCharacterProfile={openCharacterProfile}
+                onShowChatMemory={handleShowChatMemory}
               />
             }
           />
@@ -578,6 +588,15 @@ const App = () => {
               onShowChatMemory={handleShowChatMemory}
               openCharacterProfile={openCharacterProfile}
             />}
+          />
+          <Route
+            path="/search"
+            element={
+              <SearchResults
+                results={filteredCharacters}
+                onSelectCharacter={openChatWithCharacter}
+              />
+            }
           />
           {/* Removed /terms route, Terms will be a modal instead */}
         </Routes>
@@ -814,28 +833,13 @@ const App = () => {
               <h3 className="font-bold mb-1">How do I cancel my subscription?</h3>
               <p>Go to <b>Account &gt; Billing &gt; Cancel Subscription</b> in the menu. Then follow the prompts to confirm your cancellation.</p>
             </div>
+            <div>
+              <h3 className="font-bold mb-1">How do I report a bug?</h3>
+              <p>Report bugs by contacting <a href="mailto:support@secretai.com" className="text-pink-400 underline">support@secretai.com</a>.</p>
+            </div>
           </div>
         </Modal>
       )}
-    </div>
-  );
-}
-
-// --- Modal Component ---
-function Modal({ onClose, title, children }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-gradient-to-br from-[#2d1e4f] to-[#1a1333] rounded-2xl shadow-2xl border border-white/10 p-6 w-full max-w-lg mx-4 relative animate-fade-in">
-        <button
-          className="absolute top-3 right-3 text-white/60 hover:text-pink-400 text-2xl font-bold"
-          onClick={onClose}
-          aria-label="Close"
-        >
-          &times;
-        </button>
-        <h2 className="text-2xl font-bold mb-4 text-white/90">{title}</h2>
-        {children}
-      </div>
     </div>
   );
 }
