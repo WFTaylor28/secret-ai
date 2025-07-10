@@ -7,16 +7,15 @@ import MyChats from "./MyChats";
 import TermsPage from "./TermsPage";
 import Modal from "./Modal";
 import SearchResults from "./SearchResults";
+import MyCharacters from "./MyCharacters";
 
 // Glassmorphism and animation helpers
 const glass = "backdrop-blur-md bg-white/10 border border-white/20 shadow-xl";
 const fadeIn = "transition-all duration-500 ease-in-out";
 
 const App = () => {
-  // My Characters modal
   // Search bar state
   const [searchQuery, setSearchQuery] = useState("");
-  const [showMyCharacters, setShowMyCharacters] = useState(false);
   const [editCharacter, setEditCharacter] = useState(null); // character object or null
   // Chat memory modal and per-character memory
   const [showChatMemory, setShowChatMemory] = useState(false);
@@ -390,6 +389,11 @@ const App = () => {
     setChatSessions((prev) => prev.filter((s) => s.characterId !== characterId));
   };
 
+  // Delete a created character
+  const handleDeleteCharacter = (characterId) => {
+    setCreatedCharacters((prev) => prev.filter((char) => char.id !== characterId));
+  };
+
   // Get chat session for a character
   const getChatSession = (characterId) =>
     chatSessions.find((s) => s.characterId === characterId) || { messages: [] };
@@ -422,15 +426,71 @@ const App = () => {
   const [showCharacterProfile, setShowCharacterProfile] = useState(false);
   const [profileCharacter, setProfileCharacter] = useState(null);
 
+  // Handler to edit a character
+  const handleEditCharacter = (char) => {
+    setEditCharacter({ ...char }); // Make a copy for editing
+  };
+
+  // State for editing character form
+  const [editCharacterForm, setEditCharacterForm] = useState(null);
+
+  // When editCharacter changes, sync form state
+  React.useEffect(() => {
+    if (editCharacter) {
+      setEditCharacterForm({ ...editCharacter });
+    } else {
+      setEditCharacterForm(null);
+    }
+  }, [editCharacter]);
+
+  // Handle input changes in edit modal
+  const handleEditInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setEditCharacterForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  // Handle image change in edit modal
+  const handleEditImageChange = (e) => {
+    if (e.target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setEditCharacterForm((prev) => ({ ...prev, image: e.target.result }));
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    }
+  };
+
+  // Save edited character
+  const handleSaveEditCharacter = (e) => {
+    e.preventDefault();
+    setCreatedCharacters((prev) =>
+      prev.map((char) =>
+        char.id === editCharacterForm.id ? { ...editCharacterForm } : char
+      )
+    );
+    setEditCharacter(null);
+  };
+
+  // Cancel editing
+  const handleCancelEditCharacter = () => {
+    setEditCharacter(null);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1a1333] via-[#2d1e4f] to-[#0f051d] text-white flex flex-col">
       {/* Top Navigation Bar */}
       <nav className="w-full bg-gradient-to-r from-purple-900/80 to-indigo-900/80 shadow-lg z-20 sticky top-0">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2 md:gap-6">
-            <span className="text-2xl font-extrabold bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent drop-shadow-lg cursor-pointer select-none" onClick={goHome}>
-              SecretAI
-            </span>
+            {/* Logo and Brand */}
+            <div className="flex items-center">
+              <span className="text-2xl font-extrabold bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent drop-shadow-lg cursor-pointer select-none" onClick={goHome}>
+                Lurelia AI
+              </span>
+            </div>
             <button
               onClick={goHome}
               className={`hidden md:inline text-base font-medium px-4 py-2 rounded-full transition-all ${window.location.pathname === "/" ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg" : "text-purple-200 hover:bg-purple-800/30"}`}
@@ -438,8 +498,8 @@ const App = () => {
               Home
             </button>
             <button
-              onClick={() => setShowMyCharacters(true)}
-              className="hidden md:inline text-base font-medium px-4 py-2 rounded-full transition-all text-purple-200 hover:bg-purple-800/30"
+              onClick={() => navigate("/my-characters")}
+              className={`hidden md:inline text-base font-medium px-4 py-2 rounded-full transition-all ${window.location.pathname === "/my-characters" ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg" : "text-purple-200 hover:bg-purple-800/30"}`}
             >
               My Characters
             </button>
@@ -504,9 +564,12 @@ const App = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-purple-700/40 via-pink-500/10 to-indigo-900/60 pointer-events-none" />
           <div className="container mx-auto px-4 py-12 flex flex-col md:flex-row justify-between items-center gap-8">
             <div className="flex-1">
-              <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent drop-shadow-lg mb-4 animate-fade-in">
-                SecretAI
-              </h1>
+              {/* Logo and Brand */}
+              <div className="flex items-center mb-4">
+                <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent drop-shadow-lg animate-fade-in">
+                  Lurelia AI
+                </h1>
+              </div>
               <p className="text-lg md:text-2xl text-white/80 mb-6 max-w-xl animate-fade-in delay-100">
                 Create, chat, and explore with custom AI characters in a beautiful, immersive interface.
               </p>
@@ -599,121 +662,26 @@ const App = () => {
               />
             }
           />
+          <Route
+            path="/my-characters"
+            element={
+              <MyCharacters
+                user={user}
+                onEditCharacter={handleEditCharacter}
+                onDeleteCharacter={handleDeleteCharacter}
+              />
+            }
+          />
           {/* Removed /terms route, Terms will be a modal instead */}
         </Routes>
       </main>
-      {/* My Characters Modal */}
-      {showMyCharacters && (
-        <Modal onClose={() => { setShowMyCharacters(false); setEditCharacter(null); }} title="My Characters">
-          <div className="space-y-4">
-            {user.characters.length === 0 ? (
-              <div className="text-white/70">You have not created any characters yet.</div>
-            ) : (
-              <ul className="space-y-2">
-                {user.characters.map((char) => (
-                  <li
-                    key={char.id}
-                    className="flex items-center justify-between bg-white/5 rounded-lg px-4 py-2 cursor-pointer group"
-                    onClick={() => openCharacterProfile(char)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <img src={char.image} alt={char.name} className="w-16 h-24 rounded-2xl object-cover border border-white/10 group-hover:ring-2 group-hover:ring-pink-400 transition" />
-                      <div>
-                        <div className="font-semibold text-white">{char.name}</div>
-                        <div className="text-xs text-white/60">{char.description}</div>
-                      </div>
-                    </div>
-                    <button
-                      className="px-3 py-1 rounded bg-purple-700 hover:bg-purple-800 text-white text-xs font-semibold"
-                      onClick={e => { e.stopPropagation(); setEditCharacter(char); }}
-                    >
-                      Edit
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </Modal>
-      )}
-
-      {/* Character Profile Modal */}
-      {showCharacterProfile && profileCharacter && (
-        <Modal onClose={() => setShowCharacterProfile(false)} title={profileCharacter.name + "'s Profile"}>
-          <div className="space-y-4 text-left">
-            <div className="flex items-center gap-4">
-              <img src={profileCharacter.image} alt={profileCharacter.name} className="w-20 h-20 rounded-2xl object-cover border border-white/20" />
-              <div>
-                <div className="text-xl font-bold">{profileCharacter.name}</div>
-                <div className="text-sm text-white/70">{profileCharacter.description}</div>
-              </div>
-            </div>
-            {profileCharacter.backstory && <div><span className="font-semibold">Backstory:</span> <span className="text-white/80">{profileCharacter.backstory}</span></div>}
-            {profileCharacter.personality && <div><span className="font-semibold">Personality:</span> <span className="text-white/80">{profileCharacter.personality}</span></div>}
-            {profileCharacter.motivations && <div><span className="font-semibold">Motivations:</span> <span className="text-white/80">{profileCharacter.motivations}</span></div>}
-            {profileCharacter.values && <div><span className="font-semibold">Values:</span> <span className="text-white/80">{profileCharacter.values}</span></div>}
-            {profileCharacter.accent && <div><span className="font-semibold">Accent:</span> <span className="text-white/80">{profileCharacter.accent}</span></div>}
-            {profileCharacter.scenario && <div><span className="font-semibold">Scenario:</span> <span className="text-white/80">{profileCharacter.scenario}</span></div>}
-            {profileCharacter.firstMessage && <div><span className="font-semibold">First Message:</span> <span className="text-white/80">{profileCharacter.firstMessage}</span></div>}
-          </div>
-        </Modal>
-      )}
-
-      {/* Edit Character Modal */}
-      {editCharacter && (
-        <Modal onClose={() => setEditCharacter(null)} title={`Edit Character: ${editCharacter.name}`}>
-          <form className="space-y-4" onSubmit={e => { e.preventDefault(); setEditCharacter(null); }}>
-            <div>
-              <label className="block text-sm font-semibold mb-1">Name</label>
-              <input className="w-full rounded px-3 py-2 bg-white/10 text-white" value={editCharacter.name} onChange={e => setEditCharacter({ ...editCharacter, name: e.target.value })} />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold mb-1">Description</label>
-              <textarea className="w-full rounded px-3 py-2 bg-white/10 text-white" value={editCharacter.description} onChange={e => setEditCharacter({ ...editCharacter, description: e.target.value })} />
-            </div>
-            <div className="flex gap-2 items-center">
-              <label className="flex items-center gap-1 text-sm"><input type="checkbox" checked={editCharacter.isPublic} onChange={e => setEditCharacter({ ...editCharacter, isPublic: e.target.checked })} /> Public</label>
-              <label className="flex items-center gap-1 text-sm"><input type="checkbox" checked={editCharacter.nsfw} onChange={e => setEditCharacter({ ...editCharacter, nsfw: e.target.checked })} /> NSFW</label>
-            </div>
-            <div className="flex justify-end gap-2">
-              <button type="button" className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-700 text-white" onClick={() => setEditCharacter(null)}>Cancel</button>
-              <button type="submit" className="px-4 py-2 rounded bg-purple-700 hover:bg-purple-800 text-white font-semibold">Save</button>
-            </div>
-          </form>
-        </Modal>
-      )}
-
-      {/* Chat Memory Modal */}
-      {showChatMemory && (
-        <Modal onClose={() => setShowChatMemory(false)} title="Chat Memory">
-          <div className="space-y-4">
-            <textarea
-              className="w-full rounded px-3 py-2 bg-white/10 text-white min-h-[180px]"
-              value={chatMemoryText}
-              onChange={e => setChatMemoryText(e.target.value)}
-              placeholder="Type memory or context for this character here. The AI will use this as reference."
-            />
-            <div className="flex justify-end gap-2">
-              <button className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-700 text-white" onClick={() => setShowChatMemory(false)}>Close</button>
-              <button
-                className="px-4 py-2 rounded bg-purple-700 hover:bg-purple-800 text-white font-semibold"
-                onClick={() => {
-                  setChatMemories(prev => ({ ...prev, [chatMemoryCharacterId]: chatMemoryText }));
-                  setShowChatMemory(false);
-                }}
-              >Save</button>
-            </div>
-          </div>
-        </Modal>
-      )}
 
       {/* --- Global Footer --- */}
       <footer className="w-full bg-gradient-to-r from-purple-900/80 to-indigo-900/80 py-8 mt-12 shadow-inner animate-fade-in border-t border-white/10">
         <div className="container mx-auto px-4 text-center text-white/80 text-base flex flex-col md:flex-row md:justify-between md:items-center gap-6">
           {/* Left: Brand & Copyright */}
           <div className="flex flex-col items-center md:items-start gap-2">
-            <span className="text-2xl font-extrabold bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent drop-shadow-lg select-none">SecretAI</span>
-            <span className="text-xs text-white/60">&copy; 2025 SecretAI. All rights reserved.</span>
+            <span className="text-xs text-white/60">&copy; 2025 Lurelia AI. All rights reserved.</span>
           </div>
           {/* Center: Navigation Links */}
           <div className="flex flex-wrap justify-center items-center gap-4 md:gap-8">
@@ -724,7 +692,7 @@ const App = () => {
           </div>
           {/* Right: Quick Info */}
           <div className="flex flex-col items-center md:items-end gap-2 text-xs text-white/60">
-            <span>Made with <span className="text-pink-400">♥</span> by the SecretAI Team</span>
+            <span>Made with <span className="text-pink-400">♥</span> by the Lurelia AI Team</span>
             <span>Last updated: July 9, 2025</span>
           </div>
         </div>
@@ -734,7 +702,7 @@ const App = () => {
       {showBlockedContent && (
         <Modal onClose={() => setShowBlockedContent(false)} title="Blocked Content Policy">
           <div className="max-h-[70vh] overflow-y-auto text-left text-white/90 space-y-4 px-1 md:px-4">
-            <span>SecretAI strictly prohibits the following types of content:</span>
+            <span>Lurelia AI strictly prohibits the following types of content:</span>
             <ul className="list-disc pl-6 space-y-2 text-white">
               <li>Sexual content involving minors (real or fictional), including any form of child sexual abuse material (CSAM).</li>
               <li>Non-consensual sexual content, including simulated or implied non-consensual acts.</li>
@@ -744,7 +712,7 @@ const App = () => {
               <li>Using real people’s or celebrities’ images or likenesses when creating characters.</li>
               <li>Any material that violates applicable laws or regulations.</li>
             </ul>
-            <span className="text-xs text-white/60 block mt-2">SecretAI reserves the right to remove content and/or ban users who violate these policies.</span>
+            <span className="text-xs text-white/60 block mt-2">Lurelia AI reserves the right to remove content and/or ban users who violate these policies.</span>
             <p className="text-xs text-white/60 mt-4">Last updated: July 9, 2025</p>
           </div>
         </Modal>
@@ -754,18 +722,18 @@ const App = () => {
       {showTerms && (
         <Modal onClose={() => setShowTerms(false)} title="Terms of Service">
           <div className="max-h-[70vh] overflow-y-auto text-left text-white/90 space-y-4 px-1 md:px-4">
-            <p>Welcome to SecretAI! Please read these Terms of Service carefully before using our website and services.</p>
+            <p>Welcome to Lurelia AI! Please read these Terms of Service carefully before using our website and services.</p>
             <ol className="list-decimal pl-6 space-y-2">
-              <li><strong>Acceptance of Terms:</strong> By accessing or using SecretAI, you agree to be bound by these Terms of Service and our Privacy Policy.</li>
-              <li><strong>Use of Service:</strong> You may use SecretAI to create, chat, and interact with AI characters for personal, non-commercial purposes only.</li>
+              <li><strong>Acceptance of Terms:</strong> By accessing or using Lurelia AI, you agree to be bound by these Terms of Service and our Privacy Policy.</li>
+              <li><strong>Use of Service:</strong> You may use Lurelia AI to create, chat, and interact with AI characters for personal, non-commercial purposes only.</li>
               <li><strong>User Content:</strong> You are responsible for any content you create or share. Do not upload or share illegal, harmful, or offensive material.</li>
               <li><strong>Account Security:</strong> You are responsible for maintaining the confidentiality of your account information.</li>
-              <li><strong>Prohibited Activities:</strong> You may not use SecretAI for any unlawful purpose or to harass, abuse, or harm others.</li>
-              <li><strong>Intellectual Property:</strong> All content and software on SecretAI is owned by us or our licensors. Do not copy, modify, or distribute without permission.</li>
-              <li><strong>Disclaimer:</strong> SecretAI is provided "as is" without warranties of any kind. We do not guarantee accuracy or availability.</li>
-              <li><strong>Limitation of Liability:</strong> We are not liable for any damages arising from your use of SecretAI.</li>
-              <li><strong>Changes to Terms:</strong> We may update these Terms at any time. Continued use of SecretAI means you accept the new Terms.</li>
-              <li><strong>Contact:</strong> For questions, contact us at support@secretai.com.</li>
+              <li><strong>Prohibited Activities:</strong> You may not use Lurelia AI for any unlawful purpose or to harass, abuse, or harm others.</li>
+              <li><strong>Intellectual Property:</strong> All content and software on Lurelia AI is owned by us or our licensors. Do not copy, modify, or distribute without permission.</li>
+              <li><strong>Disclaimer:</strong> Lurelia AI is provided "as is" without warranties of any kind. We do not guarantee accuracy or availability.</li>
+              <li><strong>Limitation of Liability:</strong> We are not liable for any damages arising from your use of Lurelia AI.</li>
+              <li><strong>Changes to Terms:</strong> We may update these Terms at any time. Continued use of Lurelia AI means you accept the new Terms.</li>
+              <li><strong>Contact:</strong> For questions, contact us at support@lureliaai.com.</li>
             </ol>
             <p className="text-xs text-white/60 mt-4">Last updated: July 9, 2025</p>
           </div>
@@ -828,7 +796,7 @@ const App = () => {
             </div>
             <div>
               <h3 className="font-bold mb-1">How do we contact you for recommendations and suggestions?</h3>
-              <p>You can email us at <a href="mailto:support@secretai.com" className="text-pink-400 underline">support@secretai.com</a> for any feedback, recommendations, or suggestions. We value your input!</p>
+              <p>You can email us at <a href="mailto:support@lureliaai.com" className="text-pink-400 underline">support@lureliaai.com</a> for any feedback, recommendations, or suggestions. We value your input!</p>
             </div>
             <div>
               <h3 className="font-bold mb-1">How do I cancel my subscription?</h3>
@@ -836,9 +804,182 @@ const App = () => {
             </div>
             <div>
               <h3 className="font-bold mb-1">How do I report a bug?</h3>
-              <p>Report bugs by contacting <a href="mailto:support@secretai.com" className="text-pink-400 underline">support@secretai.com</a>.</p>
+              <p>Report bugs by contacting <a href="mailto:support@lureliaai.com" className="text-pink-400 underline">support@lureliaai.com</a>.</p>
             </div>
           </div>
+        </Modal>
+      )}
+
+      {/* Edit Character Modal */}
+      {editCharacter && editCharacterForm && (
+        <Modal onClose={handleCancelEditCharacter} title={`Edit Character: ${editCharacterForm.name || ''}`}>
+          <form onSubmit={handleSaveEditCharacter} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+            <div>
+              <label className="block text-sm font-medium mb-1">Character Name</label>
+              <input
+                type="text"
+                name="name"
+                value={editCharacterForm.name || ''}
+                onChange={handleEditInputChange}
+                required
+                className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="Enter character name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Character Image</label>
+              <div className="flex items-center space-x-4">
+                {editCharacterForm.image ? (
+                  <img
+                    src={editCharacterForm.image}
+                    alt="Preview"
+                    className="w-20 h-20 rounded object-cover"
+                  />
+                ) : (
+                  <div className="w-20 h-20 bg-gray-800 rounded flex items-center justify-center">
+                    <span className="text-gray-400 text-xs text-center">No image</span>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleEditImageChange}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded cursor-pointer"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Backstory</label>
+              <textarea
+                name="backstory"
+                value={editCharacterForm.backstory || ''}
+                onChange={handleEditInputChange}
+                rows={2}
+                className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="Describe your character's backstory..."
+              ></textarea>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Personality Traits</label>
+              <input
+                type="text"
+                name="personality"
+                value={editCharacterForm.personality || ''}
+                onChange={handleEditInputChange}
+                className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="e.g. sarcastic, kind, brave, funny, shy, youthful, etc. (comma separated)"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Motivations</label>
+              <input
+                type="text"
+                name="motivations"
+                value={editCharacterForm.motivations || ''}
+                onChange={handleEditInputChange}
+                className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="What drives your character? (comma separated)"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Values</label>
+              <input
+                type="text"
+                name="values"
+                value={editCharacterForm.values || ''}
+                onChange={handleEditInputChange}
+                className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="What does your character value? (comma separated)"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Accent / Dialect</label>
+              <select
+                name="accent"
+                value={editCharacterForm.accent || ''}
+                onChange={handleEditInputChange}
+                className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="">None</option>
+                <option value="british">British</option>
+                <option value="southern">Southern US</option>
+                <option value="pirate">Pirate</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Description</label>
+              <textarea
+                name="description"
+                value={editCharacterForm.description || ''}
+                onChange={handleEditInputChange}
+                rows={2}
+                className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="Describe your character's appearance, quirks, or style..."
+              ></textarea>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Current Scenario</label>
+              <textarea
+                name="scenario"
+                value={editCharacterForm.scenario || ''}
+                onChange={handleEditInputChange}
+                rows={2}
+                className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="Describe the current circumstances or context for this character's story..."
+              ></textarea>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">First Message (what the AI says to start the chat)</label>
+              <textarea
+                name="firstMessage"
+                value={editCharacterForm.firstMessage || ''}
+                onChange={handleEditInputChange}
+                rows={4}
+                required
+                className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder={
+                  `Example:\n**The character paces the room, glancing at the door.**\n_What if they never arrive?_\n\n"You're finally here! I was starting to think you'd forgotten about me."\n\n**She grins, folding her arms.**\n\n(Write the AI's first message in this immersive, expressive style. Use double asterisks for actions, _italics_ for thoughts, and quotes for speech. Alternate between actions and speech, and include at least three actions and one internal thought.)`
+                }
+              ></textarea>
+            </div>
+            <div className="flex flex-wrap gap-4">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  name="isPublic"
+                  checked={!!editCharacterForm.isPublic}
+                  onChange={handleEditInputChange}
+                  className="rounded text-purple-600 focus:ring-purple-500"
+                />
+                <span>Make Public</span>
+              </label>
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  name="nsfw"
+                  checked={!!editCharacterForm.nsfw}
+                  onChange={handleEditInputChange}
+                  className="rounded text-purple-600 focus:ring-purple-500"
+                />
+                <span>NSFW Content</span>
+              </label>
+            </div>
+            <div className="pt-2 flex gap-4">
+              <button
+                type="submit"
+                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 px-6 py-2 rounded-lg font-medium transition-all transform hover:scale-105"
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelEditCharacter}
+                className="bg-gray-700 hover:bg-gray-800 px-6 py-2 rounded-lg font-medium transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
         </Modal>
       )}
     </div>
