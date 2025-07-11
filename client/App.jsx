@@ -1104,13 +1104,13 @@ const App = () => {
       {/* Cropping Modal */}
       {cropModal.open && (
         <Modal onClose={handleCropCancel} title="Adjust Image">
-          <div className="w-[90vw] max-w-md h-96 relative bg-black rounded-lg overflow-hidden">
+          <div className="w-64 h-64 mx-auto relative bg-black rounded-full overflow-hidden flex items-center justify-center">
             <Cropper
               image={cropModal.imageSrc}
               crop={crop}
               zoom={zoom}
-              aspect={0.5} // 1:2 aspect ratio (width:height)
-              cropShape="round" // changed from 'rect' to 'round' for circle crop
+              aspect={1} // 1:1 aspect ratio for circle
+              cropShape="round" // circle crop
               showGrid={false}
               onCropChange={setCrop}
               onZoomChange={setZoom}
