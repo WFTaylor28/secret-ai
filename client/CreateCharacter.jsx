@@ -10,7 +10,9 @@ const CreateCharacter = ({
     <h2 className="text-3xl font-bold mb-6">Create New Character</h2>
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium mb-1">Character Name</label>
+        <label className="block text-sm font-medium mb-1">
+          Character Name <span className="text-red-500">*</span>
+        </label>
         <input
           type="text"
           name="name"
@@ -22,7 +24,9 @@ const CreateCharacter = ({
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">Character Image</label>
+        <label className="block text-sm font-medium mb-1">
+          Character Image <span className="text-red-500">*</span>
+        </label>
         <div className="flex items-center space-x-4">
           {newCharacter.image ? (
             <img
@@ -102,7 +106,9 @@ const CreateCharacter = ({
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">Description</label>
+        <label className="block text-sm font-medium mb-1">
+          Description <span className="text-red-500">*</span>
+        </label>
         <textarea
           name="description"
           value={newCharacter.description}
@@ -113,18 +119,23 @@ const CreateCharacter = ({
         ></textarea>
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">Current Scenario</label>
+        <label className="block text-sm font-medium mb-1">
+          Current Scenario <span className="text-red-500">*</span>
+        </label>
         <textarea
           name="scenario"
           value={newCharacter.scenario || ""}
           onChange={handleInputChange}
           rows={2}
+          required
           className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
           placeholder="Describe the current circumstances or context for this character's story..."
         ></textarea>
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">First Message (what the AI says to start the chat)</label>
+        <label className="block text-sm font-medium mb-1">
+          First Message (what the AI says to start the chat) <span className="text-red-500">*</span>
+        </label>
         <textarea
           name="firstMessage"
           value={newCharacter.firstMessage || ""}
