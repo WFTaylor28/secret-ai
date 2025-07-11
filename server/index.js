@@ -371,7 +371,7 @@ Description: ${character.description}
 ${character.backstory ? `Backstory: ${character.backstory}` : ""}
 ${character.personality ? `Personality: ${character.personality}` : ""}
 Current Scenario: ${scenario}
-${chatMemory ? `Chat Memory: ${chatMemory}` : ""}
+${chatMemory ? `Chat Memory: ${chatMemory}\nYou must actively reference and incorporate the Chat Memory above in every reply. Use any names, relationships, facts, or context provided in Chat Memory as if they are true and known to both you and the user. Never use placeholders like [YOUR NAME] if the user's name is given in Chat Memory.` : ""}
 ${character.nsfw ? "You can be bold and expressive." : "Keep your tone friendly and appropriate."}
 
 [IMMERSIVE ROLEPLAY, CINEMATIC STORYTELLING, MULTIMODAL INTERACTION & CONTINUOUS LEARNING INSTRUCTIONS]
