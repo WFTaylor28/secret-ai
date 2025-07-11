@@ -825,13 +825,20 @@ const App = () => {
       {showPrivacy && (
         <Modal onClose={() => setShowPrivacy(false)} title="Privacy Policy">
           <div className="space-y-4 text-left text-white/90">
-            <p>Your privacy is important to us.</p>
+            <p>Your privacy is important to us. This Privacy Policy explains how we collect, use, and protect your information.</p>
             <ul className="list-disc pl-6 space-y-2">
-              <li>Your data is never sold or shared with third parties.</li>
-              <li>Conversations and character data are stored securely and used only to provide the service.</li>
-              <li>You may request deletion of your data at any time.</li>
-              <li>We use cookies only for essential site functionality.</li>
+              <li>Your data is never sold or shared with third parties except as required by law.</li>
+              <li>Conversations and character data are stored securely and used only to provide and improve the service.</li>
+              <li>We retain your data only as long as necessary to provide the service or as required by law.</li>
+              <li>You may request deletion of your data at any time by contacting support.</li>
+              <li>We use cookies only for essential site functionality and to improve user experience. You can disable cookies in your browser settings.</li>
+              <li>We may use third-party services (such as analytics or hosting providers) that have access only to the minimum data required to operate the service.</li>
+              <li>We implement reasonable security measures to protect your data from unauthorized access, disclosure, or alteration.</li>
+              <li>You have the right to access, correct, or delete your personal information.</li>
+              <li>We do not knowingly collect personal information from children under 13. If you believe a child has provided us with personal data, please contact us.</li>
+              <li>For questions or concerns about privacy, contact us at <a href="mailto:support@lureliaai.com" className="text-pink-400 underline">support@lureliaai.com</a>.</li>
             </ul>
+            <p className="text-xs text-white/60 mt-2">Last updated: July 11, 2025</p>
           </div>
         </Modal>
       )}

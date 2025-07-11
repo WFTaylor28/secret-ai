@@ -112,15 +112,17 @@ const Chat = ({
                     {msg.isUser ? (
                       <>
                         <div className="flex items-center">
-                          <div
-                            className="max-w-md px-4 py-2 rounded-lg ml-2 order-1"
-                            style={{ background: '#23272f', color: '#fff' }}
-                          >
-                            <p className="text-sm" dangerouslySetInnerHTML={renderFormattedMessage(msg.text, true)} />
-                          </div>
-                          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 order-2">
-                            U
-                          </div>
+                      <div className="order-2 flex-shrink-0 mr-2">
+                        <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-lg font-bold border border-blue-400">
+                          U
+                        </div>
+                      </div>
+                      <div
+                        className="max-w-md px-4 py-2 rounded-lg order-1"
+                        style={{ background: '#23272f', color: '#fff' }}
+                      >
+                        <p className="text-sm" dangerouslySetInnerHTML={renderFormattedMessage(msg.text, true)} />
+                      </div>
                         </div>
                       </>
                     ) : (
@@ -146,7 +148,7 @@ const Chat = ({
                     <img
                       src={activeCharacter.image}
                       alt={activeCharacter.name}
-                      className="w-14 h-14 rounded-full object-cover mr-2 border border-purple-600 bg-gray-900 flex-shrink-0"
+                      className="w-10 h-10 rounded-full object-cover mr-2 border border-purple-600 bg-gray-900 flex-shrink-0"
                     />
                     <div className="bg-gray-800 p-3 rounded-lg max-w-md flex items-center">
                       <span className="dots">
@@ -163,7 +165,7 @@ const Chat = ({
                     <img
                       src={activeCharacter.image}
                       alt={activeCharacter.name}
-                      className="w-14 h-14 rounded-full object-cover mr-2 border border-purple-600 bg-gray-900 flex-shrink-0"
+                      className="w-10 h-10 rounded-full object-cover mr-2 border border-purple-600 bg-gray-900 flex-shrink-0"
                     />
                     <div className="bg-gray-700 p-3 rounded-lg max-w-md flex items-center">
                       <span className="typewriter">{pendingAI.text}</span>
