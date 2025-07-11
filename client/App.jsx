@@ -8,6 +8,8 @@ import TermsPage from "./TermsPage";
 import Modal from "./Modal";
 import SearchResults from "./SearchResults";
 import MyCharacters from "./MyCharacters";
+import Cropper from "react-easy-crop";
+import getCroppedImg from "./getCroppedImg";
 
 // Glassmorphism and animation helpers
 const glass = "backdrop-blur-md bg-white/10 border border-white/20 shadow-xl";
@@ -139,6 +141,15 @@ const App = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [characterToDelete, setCharacterToDelete] = useState(null);
 
+  // Add modal state for character creation feedback
+  const [characterModal, setCharacterModal] = useState({ open: false, message: "", isError: false });
+
+  // Cropping state
+  const [cropModal, setCropModal] = useState({ open: false, imageSrc: null });
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
   // Handle input changes in character form
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -148,26 +159,47 @@ const App = () => {
     }));
   };
 
-  // Handle file upload
+  // Handle file upload (show crop modal)
   const handleImageChange = (e) => {
     if (e.target.files[0]) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setNewCharacter((prev) => ({ ...prev, image: e.target.result }));
+        setCropModal({ open: true, imageSrc: e.target.result });
       };
       reader.readAsDataURL(e.target.files[0]);
     }
   };
 
+  // When cropping is done
+  const handleCropComplete = (_, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
+
+  const handleCropSave = async () => {
+    if (!cropModal.imageSrc || !croppedAreaPixels) return;
+    const croppedImage = await getCroppedImg(cropModal.imageSrc, croppedAreaPixels);
+    setNewCharacter((prev) => ({ ...prev, image: croppedImage }));
+    setCropModal({ open: false, imageSrc: null });
+  };
+
+  const handleCropCancel = () => {
+    setCropModal({ open: false, imageSrc: null });
+  };
+
   // Submit new character
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Require name, image, description, scenario, and firstMessage
+    if (!newCharacter.name.trim() || !newCharacter.image || !newCharacter.description.trim() || !newCharacter.scenario.trim() || !newCharacter.firstMessage || !newCharacter.firstMessage.trim()) {
+      setCharacterModal({ open: true, message: "Please fill in all required fields: Name, Image, Description, Scenario, and First Message.", isError: true });
+      return;
+    }
     const createdCharacter = {
       ...newCharacter,
       id: Date.now(),
     };
     setCreatedCharacters((prev) => [...prev, createdCharacter]);
-    alert(`Character "${createdCharacter.name}" created successfully!`);
+    setCharacterModal({ open: true, message: `Character \"${createdCharacter.name}\" created successfully!`, isError: false });
     setNewCharacter({
       name: "",
       image: null,
@@ -180,6 +212,7 @@ const App = () => {
       scenario: "",
       isPublic: false,
       nsfw: false,
+      firstMessage: "",
     });
   };
 
@@ -712,6 +745,7 @@ const App = () => {
             element={
               <MyCharacters
                 user={user}
+                createdCharacters={createdCharacters}
                 onEditCharacter={handleEditCharacter}
                 onDeleteCharacter={requestDeleteCharacter}
                 onChatWithCharacter={openChatWithCharacter}
@@ -1047,6 +1081,104 @@ const App = () => {
               >
                 No
               </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Character Creation Feedback Modal */}
+      {characterModal.open && (
+        <Modal onClose={() => setCharacterModal({ open: false, message: "", isError: false })} title={characterModal.isError ? "Missing Required Fields" : "Character Created"}>
+          <div className="text-center text-white/90 py-4">
+            <p className={characterModal.isError ? "text-red-400" : "text-green-400"}>{characterModal.message}</p>
+            <button
+              className="mt-6 px-6 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 font-medium transition-all"
+              onClick={() => setCharacterModal({ open: false, message: "", isError: false })}
+            >
+              OK
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Cropping Modal */}
+      {cropModal.open && (
+        <Modal onClose={handleCropCancel} title="Adjust Image">
+          <div className="w-[90vw] max-w-md h-96 relative bg-black rounded-lg overflow-hidden">
+            <Cropper
+              image={cropModal.imageSrc}
+              crop={crop}
+              zoom={zoom}
+              aspect={0.5} // 1:2 aspect ratio (width:height)
+              cropShape="round" // changed from 'rect' to 'round' for circle crop
+              showGrid={false}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={handleCropComplete}
+            />
+          </div>
+          <div className="flex justify-center gap-4 mt-4">
+            <input
+              type="range"
+              min={1}
+              max={3}
+              step={0.01}
+              value={zoom}
+              onChange={e => setZoom(Number(e.target.value))}
+              className="w-40"
+            />
+            <span className="text-white/80">Zoom</span>
+          </div>
+          <div className="flex justify-center gap-4 mt-6">
+            <button
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 px-6 py-2 rounded-lg font-medium transition-all"
+              onClick={handleCropSave}
+            >
+              Save
+            </button>
+            <button
+              className="bg-gray-700 hover:bg-gray-800 px-6 py-2 rounded-lg font-medium transition-all"
+              onClick={handleCropCancel}
+            >
+              Cancel
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Character Profile Modal */}
+      {showCharacterProfile && profileCharacter && (
+        <Modal onClose={() => setShowCharacterProfile(false)} title={profileCharacter.name}>
+          <div className="flex flex-col items-center gap-4 p-4">
+            <img
+              src={profileCharacter.image}
+              alt={profileCharacter.name}
+              className="w-32 h-64 object-cover rounded-2xl border border-white/20 shadow-lg mb-2"
+            />
+            <div className="text-center">
+              <h2 className="text-2xl font-bold mb-2">{profileCharacter.name}</h2>
+              <p className="text-white/80 mb-2">{profileCharacter.description}</p>
+              {profileCharacter.backstory && (
+                <p className="text-sm text-white/60 mb-2"><span className="font-semibold">Backstory:</span> {profileCharacter.backstory}</p>
+              )}
+              {profileCharacter.personality && (
+                <p className="text-sm text-white/60 mb-2"><span className="font-semibold">Personality:</span> {profileCharacter.personality}</p>
+              )}
+              {profileCharacter.motivations && (
+                <p className="text-sm text-white/60 mb-2"><span className="font-semibold">Motivations:</span> {profileCharacter.motivations}</p>
+              )}
+              {profileCharacter.values && (
+                <p className="text-sm text-white/60 mb-2"><span className="font-semibold">Values:</span> {profileCharacter.values}</p>
+              )}
+              {profileCharacter.accent && (
+                <p className="text-sm text-white/60 mb-2"><span className="font-semibold">Accent:</span> {profileCharacter.accent}</p>
+              )}
+              {profileCharacter.scenario && (
+                <p className="text-sm text-white/60 mb-2"><span className="font-semibold">Scenario:</span> {profileCharacter.scenario}</p>
+              )}
+              {profileCharacter.nsfw && (
+                <span className="inline-block bg-red-600 text-xs font-bold px-2 py-1 rounded-full mt-2">NSFW</span>
+              )}
             </div>
           </div>
         </Modal>
