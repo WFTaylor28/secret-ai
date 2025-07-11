@@ -49,6 +49,14 @@ const Chat = ({
   // Ref for the message list container
   const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const aiTypewriterRef = useRef(null);
+
+  // Auto-scroll the AI typewriter bubble when AI is typing out the response
+  useEffect(() => {
+    if (pendingAI && !pendingAI.thinking && aiTypewriterRef.current) {
+      aiTypewriterRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [pendingAI]);
 
   return (
     <section>
@@ -161,7 +169,7 @@ const Chat = ({
                 )}
                 {/* AI typewriter bubble */}
                 {pendingAI && !pendingAI.thinking && (
-                  <div className="flex items-start space-x-3">
+                  <div className="flex items-start space-x-3" ref={aiTypewriterRef}>
                     <img
                       src={activeCharacter.image}
                       alt={activeCharacter.name}
