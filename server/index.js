@@ -89,6 +89,13 @@ app.post("/chat", async (req, res) => {
   // Move destructure to top so character/message/history are available for all logic
   // Destructure once at the top for all logic
   const { message, character, history } = req.body;
+  // Debug: Log the full request payload and chat memory
+  console.log("[DEBUG] Incoming /chat request payload:", JSON.stringify(req.body, null, 2));
+  if (character && character.memory) {
+    console.log("[DEBUG] character.memory:", character.memory);
+  } else {
+    console.log("[DEBUG] No character.memory provided.");
+  }
   // Validate character and message at the very top before any use
   if (!message || !character || !character.name || !character.description) {
     return res.status(400).json({ error: "Character must include 'name' and 'description' and a message must be provided." });
