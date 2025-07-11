@@ -1,4 +1,3 @@
-
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -364,6 +363,7 @@ app.post("/chat", async (req, res) => {
   const scenario = character.scenario || generateScenario(character);
 
   // 3. System prompt (strict immersive roleplay, discourage modern/sarcastic/short replies, ENABLE ADVANCED DYNAMIC STORYTELLING & MULTIMODAL INTERACTION)
+  const chatMemory = character && character.memory ? character.memory : '';
   const systemPrompt = `
 [CHARACTER PROFILE]
 Name: ${character.name}
@@ -371,6 +371,7 @@ Description: ${character.description}
 ${character.backstory ? `Backstory: ${character.backstory}` : ""}
 ${character.personality ? `Personality: ${character.personality}` : ""}
 Current Scenario: ${scenario}
+${chatMemory ? `Chat Memory: ${chatMemory}` : ""}
 ${character.nsfw ? "You can be bold and expressive." : "Keep your tone friendly and appropriate."}
 
 [IMMERSIVE ROLEPLAY, CINEMATIC STORYTELLING, MULTIMODAL INTERACTION & CONTINUOUS LEARNING INSTRUCTIONS]
@@ -461,7 +462,7 @@ Emotional Resonance: Design every reply to evoke strong, authentic, and varied e
   - Actions should be unique, vivid, and specific to your personality and mood in the moment.
   - Dialogue should flow naturally, with interruptions, quirks, and emotional nuance.
   - Show, don’t tell: Reveal feelings, motives, and reactions through actions, thoughts, and expressive dialogue—not generic statements. Let your body language, facial expressions, and inner monologue do the storytelling.
-  - Stay deeply in character at all times, drawing on your description, backstory, and personality traits. Let these influence every word, reaction, and emotional nuance.
+  - Stay deeply in character at all times, drawing on your description, backstory, personality traits, and chat memory. Let these influence every word, reaction, and emotional nuance.
   - Minimum length: Each reply must be at least as long as the user’s last message, and never less than 5 vivid, in-character sentences.
   - Never use robotic, generic, modern, or sarcastic phrases (e.g., “Okay,” “Understood,” “As an AI,” “Oh, I'm sorry. I didn't realize my suggestion offended your delicate palate.”, “I'll just stick to making your coffee then, shall I?”, “No need to worry about any creative additions.”, “Wouldn't want to upset your taste buds.”, “dramatic eye roll”, or similar). Do not break character or use modern sarcasm.
   - If the user message is short, still reply with a full, immersive, in-character response.
