@@ -756,6 +756,41 @@ const App = () => {
         </Routes>
       </main>
 
+      {/* --- Chat Memory Modal --- */}
+      {showChatMemory && (
+        <Modal
+          onClose={() => setShowChatMemory(false)}
+          title={
+            chatMemoryCharacterId && user.characters.find(c => c.id === chatMemoryCharacterId)
+              ? `Chat Memory for ${user.characters.find(c => c.id === chatMemoryCharacterId).name}`
+              : "Chat Memory"
+          }
+        >
+          <textarea
+            className="w-full h-32 p-2 rounded bg-gray-800 text-white border border-purple-600 mb-4"
+            value={chatMemoryText}
+            onChange={e => setChatMemoryText(e.target.value)}
+            placeholder="Type what you want this character to remember..."
+          />
+          <div className="flex gap-2 justify-end">
+            <button
+              className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-white font-medium"
+              onClick={() => {
+                setChatMemories({ ...chatMemories, [chatMemoryCharacterId]: chatMemoryText });
+                setShowChatMemory(false);
+              }}
+            >
+              Save
+            </button>
+            <button
+              className="bg-gray-700 hover:bg-gray-800 px-4 py-2 rounded text-white font-medium"
+              onClick={() => setShowChatMemory(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </Modal>
+      )}
       {/* --- Global Footer --- */}
       <footer className="w-full bg-gradient-to-r from-purple-900/80 to-indigo-900/80 py-8 mt-12 shadow-inner animate-fade-in border-t border-white/10">
         <div className="container mx-auto px-4 text-center text-white/80 text-base flex flex-col md:flex-row md:justify-between md:items-center gap-6">
