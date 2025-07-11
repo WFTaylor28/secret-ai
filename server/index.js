@@ -367,8 +367,13 @@ app.post("/chat", async (req, res) => {
   const systemPrompt = `
 [CHAT MEMORY]
 ${chatMemory ? `${chatMemory}
-INSTRUCTION: You must always use and reference the details above in every reply. If the user's name is given (e.g., Will), always call them by that name. If a relationship is described (e.g., "Mira and I already know each other"), always act and speak as if you know each other. Never use placeholders like [YOUR NAME] or [USER].
-Example: If Chat Memory says "Mira and I already know each other, my name is Will", you must call the user Will and act as if you know each other.` : 'No chat memory provided.'}
+INSTRUCTION: You must always use and reference the details above in every reply. If the user's name is given (e.g., Will), always call them by that name. If a relationship is described (e.g., "Mira and I already know each other"), always act and speak as if you know each other. Never use placeholders like [YOUR NAME] or [USER]. Always use the actual name and relationship from chat memory. If you do not reference the user's name and relationship from chat memory, you must immediately rewrite your reply to include them.
+WARNING: If you ever use a placeholder like [YOUR NAME] or [USER], or fail to reference the user's name and relationship from chat memory, you must immediately rewrite your reply to include them.
+Few-shot Example:
+Chat Memory: "Mira and I already know each other, my name is Will."
+User: How are you?
+${character.name}: **I smile warmly at Will, feeling the comfort of our shared history.** _It's always easier to talk to someone you know._ "I'm doing well, Will. It's good to see you again. How have you been?" **I lean in, remembering the times Mira and I spent together.**
+` : 'No chat memory provided.'}
 
 [CHARACTER PROFILE]
 Name: ${character.name}
