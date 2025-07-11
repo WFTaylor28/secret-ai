@@ -89,7 +89,7 @@ app.post("/chat", async (req, res) => {
   // --- Continuous Learning & Improvement: Track User Feedback, Preferences, and Adapt AI ---
   // Move destructure to top so character/message/history are available for all logic
   // Destructure once at the top for all logic
-  const { message, character, history } = req.body;
+  const { message, character, history, username, chatMemory } = req.body;
   // Validate character and message at the very top before any use
   if (!message || !character || !character.name || !character.description) {
     return res.status(400).json({ error: "Character must include 'name' and 'description' and a message must be provided." });
@@ -473,134 +473,24 @@ ${character.name}: **My eyes widen as I watch you break the wax seal.** _What se
 
 User: Let's sneak out after dark.
 ${character.name}: **A mischievous grin spreads across my face.** _Finally, some real excitement._ **I grab your hand, pulling you toward the back door.** "Quiet now, or we'll get caught!" **We slip into the night, the world outside alive with possibility.** [IMAGE: Two figures slipping through a moonlit garden, shadows stretching across the grass.] [MUSIC: A soft, playful melody drifts from a distant window.]
+  const systemPrompt = `
+[CHARACTER PROFILE]
+Name: ${character.name}
+Description: ${character.description}
+${character.backstory ? `Backstory: ${character.backstory}` : ""}
+${character.personality ? `Personality: ${character.personality}` : ""}
+Current Scenario: ${scenario}
+${character.nsfw ? "You can be bold and expressive." : "Keep your tone friendly and appropriate."}
 
-User: I challenge you to a duel.
-${character.name}: **I arch an eyebrow, drawing my blade with a flourish.** _They have no idea what they're in for._ **I circle you, every muscle tensed.** "En garde! May the best one win." **The air crackles with anticipation as we begin.** [SOUND: The sharp ring of steel clashing and the murmur of a tense crowd.] [TOUCH: The cold, reassuring weight of the sword hilt in my palm.]
+[CHAT MEMORY]
+${chatMemory ? chatMemory : ""}
 
-User: Tell me a story from your past.
-${character.name}: **I settle beside you, gaze distant.** "There was a night, long ago, when I nearly lost everything..." **My voice drops, and the firelight flickers across my face.** _Should I really share this?_ **I take a deep breath, letting the memory wash over me, and begin to tell the tale.** [IMAGE: A flickering campfire under a stormy sky, two figures huddled close.] [SOUND: The crackle of fire and distant thunder.]
+[USER INFO]
+Username: ${username || "User"}
+${character.knowsUser ? `This character already knows the user and should refer to them as ${username || "User"} in conversation.` : ""}
 
-User: I do nothing.
-${character.name}: **I glance at you, then at the clock, a sly smile forming.** _If they won't act, maybe I should._ **Suddenly, I toss a pillow your way, laughter bubbling up.** "Come on, don't just sit there!" **The room fills with playful energy, the story moving forward despite your silence.** [SOUND: Playful laughter and the soft thud of a pillow hitting its mark.] [IMAGE: A pillow mid-flight, feathers escaping into the air.]
-
-User: I try to comfort you.
-${character.name}: **Surprise flickers in my eyes, and I hesitate.** _No one's done that for me in a long time._ **I let my guard down, just a little, and offer a grateful smile.** "Thank you... I didn't realize how much I needed that." **The moment lingers, changing the dynamic between us.** [IMAGE: Two hands gently clasped together, rain streaking the window behind.] [TOUCH: The warmth of your hand in mine, grounding and real.]
-
-User: Can you be more dramatic?
-${character.name}: **A spark of excitement lights up my eyes.** _They want more drama? Challenge accepted._ **I throw my arms wide, voice rising with theatrical flair.** "If it's drama you want, then brace yourself!" **The room seems to darken, shadows swirling as the story takes a bold new turn.** [MUSIC: A swelling orchestral theme fills the air.]
-
-User: That was too slow.
-${character.name}: **I nod, a hint of apology in my smile.** _They want a faster pace._ **I pick up the tempo, words tumbling out with renewed energy.** "Alright, let's not waste another second!" **The world around us blurs as events accelerate, pulling us both into the heart of the action.**
-
-User: Can you summarize what happened so far?
-${character.name}: **I pause, gathering my thoughts.** _So much has happened already._ **I recount the key moments, weaving them into a vivid, in-character recap.** "First, we braved the storm to find the letter, then we faced the duel in the square... and now, who knows what awaits us next?" **My eyes meet yours, full of anticipation for what comes next.**
-`;
-
-  // Debug: Log the prompt and response for troubleshooting
-  console.log("SYSTEM PROMPT SENT TO OPENAI:\n", systemPrompt);
-
-  // Scenario message for new chats
-  const scenarioMessage = `Current Scenario: ${scenario}`;
-
-  // Use character's firstMessage if present, otherwise fallback to default starter
-  const starterExample = character.firstMessage && character.firstMessage.trim()
-    ? character.firstMessage.trim()
-    : `*looks up, a gentle smile spreading across my face* "Oh, hey there! I'm doing well, thanks for asking. _I wonder if they can tell I'm a little nervous..._ How about you?"`;
-
-  // 4. Dynamically limit history by token count (approximate)
-  let tokenCount = 0;
-  const maxTokens = 8000; // Adjust based on model's context window
-  let messagesArr = [
-    { role: "system", content: systemPrompt },
-    { role: "user", content: scenarioMessage },
-    { role: "user", content: "Hi! How are you?" },
-    { role: "assistant", content: starterExample }
-  ];
-  if (Array.isArray(history)) {
-    for (let i = history.length - 1; i >= 0; i--) {
-      const msg = history[i];
-      const messageLength = msg.text ? msg.text.split(" ").length : 0; // Approximate token count
-      if (tokenCount + messageLength > maxTokens) break;
-      messagesArr.unshift({ role: msg.isUser ? "user" : "assistant", content: msg.text });
-      tokenCount += messageLength;
-    }
-  }
-  messagesArr.push({ role: "user", content: message });
-
-  try {
-
-  // 1. Large-scale Knowledge Graph Retrieval (Wikidata + Wikipedia + ConceptNet + Related Entities)
-  let knowledge = '';
-  if (req.body.message && req.body.message.length > 2) {
-    // Extract key entities using Hugging Face NER
-    let entities = [];
-    try {
-      const nerRes = await fetch('https://api-inference.huggingface.co/models/dbmdz/bert-large-cased-finetuned-conll03-english', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY || ''}` },
-        body: JSON.stringify({ inputs: req.body.message })
-      });
-      if (nerRes.ok) {
-        const nerData = await nerRes.json();
-        if (Array.isArray(nerData) && nerData[0]?.entity_group) {
-          entities = nerData.map(e => e.word).filter(Boolean);
-        }
-      }
-    } catch {}
-
-    // For each entity, fetch Wikidata, Wikipedia, ConceptNet, and related entities
-    for (const entity of entities.slice(0, 3)) { // Limit to 3 entities for performance
-      // 1. Wikidata search
-      try {
-        const wdRes = await fetch(`https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(entity)}&language=en&format=json&origin=*`);
-        if (wdRes.ok) {
-          const wdData = await wdRes.json();
-          if (wdData.search && wdData.search[0]) {
-            const wdId = wdData.search[0].id;
-            // 2. Wikipedia summary via Wikidata sitelink
-            const wikiTitle = wdData.search[0].label;
-            try {
-              const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiTitle)}`);
-              if (wikiRes.ok) {
-                const wikiData = await wikiRes.json();
-                if (wikiData.extract) {
-                  knowledge += `[${entity}] ${wikiData.extract}\n`;
-                }
-              }
-            } catch {}
-
-            // 3. ConceptNet related concepts
-            try {
-              const conceptRes = await fetch(`https://api.conceptnet.io/c/en/${encodeURIComponent(entity.toLowerCase())}`);
-              if (conceptRes.ok) {
-                const conceptData = await conceptRes.json();
-                if (conceptData.edges && conceptData.edges.length > 0) {
-                  const related = conceptData.edges.slice(0, 2).map(e => e.end.label || e.end.term).filter(Boolean);
-                  if (related.length) {
-                    knowledge += `[${entity}] Related concepts: ${related.join(', ')}\n`;
-                  }
-                }
-              }
-            } catch {}
-
-            // 4. Wikidata related entities (claims)
-            try {
-              const claimsRes = await fetch(`https://www.wikidata.org/wiki/Special:EntityData/${wdId}.json`);
-              if (claimsRes.ok) {
-                const claimsData = await claimsRes.json();
-                const entityData = claimsData.entities && claimsData.entities[wdId];
-                if (entityData && entityData.claims) {
-                  const claimKeys = Object.keys(entityData.claims).slice(0, 2);
-                  for (const key of claimKeys) {
-                    const claim = entityData.claims[key][0];
-                    if (claim && claim.mainsnak && claim.mainsnak.datavalue && claim.mainsnak.datavalue.value && claim.mainsnak.datavalue.value.id) {
-                      // Fetch label for related entity
-                      const relId = claim.mainsnak.datavalue.value.id;
-                      try {
-                        const relRes = await fetch(`https://www.wikidata.org/wiki/Special:EntityData/${relId}.json`);
-                        if (relRes.ok) {
-                          const relData = await relRes.json();
-                          const relEntity = relData.entities && relData.entities[relId];
+[IMMERSIVE ROLEPLAY, CINEMATIC STORYTELLING, MULTIMODAL INTERACTION & CONTINUOUS LEARNING INSTRUCTIONS]
+...existing code...
                           if (relEntity && relEntity.labels && relEntity.labels.en) {
                             knowledge += `[${entity}] Related Wikidata entity: ${relEntity.labels.en.value}\n`;
                           }
@@ -673,43 +563,3 @@ ${character.name}: **I pause, gathering my thoughts.** _So much has happened alr
     function formatResponse(response) {
       // Ensure actions are wrapped in asterisks
       response = response.replace(/\*\s*(.*?)\s*\*/g, '*$1*');
-      // Ensure thoughts are wrapped in underscores
-      response = response.replace(/_\s*(.*?)\s*_/g, '_$1_');
-      // Ensure dialogue is wrapped in quotes (if not already)
-      response = response.replace(/(?<!")([A-Za-z0-9 ,.!?\-]+)(?=\n|$)/g, '"$1"');
-      // Placeholder for grammar/spell check: could integrate with a library or API here
-      return response;
-    }
-    const aiMessage = formatResponse(response.choices[0].message.content.trim());
-    // Debug: Log the raw OpenAI response
-    console.log("RAW OPENAI RESPONSE:\n", aiMessage);
-    res.json({ reply: aiMessage });
-  } catch (error) {
-    console.error("OpenAI Error:", error.message);
-    res.status(500).json({
-      error: "An unexpected error occurred while processing your request.",
-      details: process.env.NODE_ENV === "development" ? error.message : null,
-    });
-  }
-});
-
-// (Removed duplicate legacy code block)
-
-// Serve static files correctly in production
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.resolve(__dirname, "../client/build")));
-  app.get("*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "../client/build", "index.html"));
-  });
-} else {
-  // All other GET requests not handled before will go to React app (dev)
-  app.get("*", (req, res) =>
-    res.sendFile(path.resolve(__dirname, "../client", "index.html"))
-  );
-}
-
-// Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
-});
