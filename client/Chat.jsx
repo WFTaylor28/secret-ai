@@ -125,9 +125,11 @@ const Chat = ({
                       </>
                     ) : (
                       <>
-                        <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0 mr-2">
-                          A
-                        </div>
+                        <img
+                          src={activeCharacter.image}
+                          alt={activeCharacter.name}
+                          className="w-14 h-14 rounded-full object-cover mr-2 border border-purple-600 bg-gray-900 flex-shrink-0"
+                        />
                         <div
                           className="max-w-md px-4 py-2 rounded-lg"
                           style={{ background: '#23272f', color: '#fff' }}
@@ -141,9 +143,11 @@ const Chat = ({
                 {/* AI is typing bubble ("..."), only if not animating reply */}
                 {isTyping && pendingAI && pendingAI.thinking && (
                   <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
-                      A
-                    </div>
+                    <img
+                      src={activeCharacter.image}
+                      alt={activeCharacter.name}
+                      className="w-14 h-14 rounded-full object-cover mr-2 border border-purple-600 bg-gray-900 flex-shrink-0"
+                    />
                     <div className="bg-gray-800 p-3 rounded-lg max-w-md flex items-center">
                       <span className="dots">
                         <span>.</span>
@@ -156,9 +160,11 @@ const Chat = ({
                 {/* AI typewriter bubble */}
                 {pendingAI && !pendingAI.thinking && (
                   <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
-                      A
-                    </div>
+                    <img
+                      src={activeCharacter.image}
+                      alt={activeCharacter.name}
+                      className="w-14 h-14 rounded-full object-cover mr-2 border border-purple-600 bg-gray-900 flex-shrink-0"
+                    />
                     <div className="bg-gray-700 p-3 rounded-lg max-w-md flex items-center">
                       <span className="typewriter">{pendingAI.text}</span>
                     </div>

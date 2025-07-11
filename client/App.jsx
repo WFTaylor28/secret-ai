@@ -1234,4 +1234,6 @@ function ChatPage({ user, getChatSession, handleSendMessage, inputMessage, setIn
   );
 }
 
+// ...existing code...
+
 export default App;
