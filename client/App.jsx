@@ -1153,7 +1153,7 @@ const App = () => {
             <img
               src={profileCharacter.image}
               alt={profileCharacter.name}
-              className="w-32 h-64 object-cover rounded-2xl border border-white/20 shadow-lg mb-2"
+              className="w-48 h-64 object-cover rounded-2xl border border-white/20 shadow-lg mb-2"
             />
             <div className="text-center">
               <h2 className="text-2xl font-bold mb-2">{profileCharacter.name}</h2>
