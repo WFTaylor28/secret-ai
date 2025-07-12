@@ -96,6 +96,11 @@ app.post("/chat", async (req, res) => {
   } else {
     console.log("[DEBUG] No character.memory provided.");
   }
+  if (typeof req.body.chatMemory === 'string') {
+    console.log("[DEBUG] chatMemory from payload:", req.body.chatMemory);
+  } else {
+    console.log("[DEBUG] No chatMemory provided in payload.");
+  }
   // Validate character and message at the very top before any use
   if (!message || !character || !character.name || !character.description) {
     return res.status(400).json({ error: "Character must include 'name' and 'description' and a message must be provided." });
@@ -370,7 +375,13 @@ app.post("/chat", async (req, res) => {
   const scenario = character.scenario || generateScenario(character);
 
   // 3. System prompt (strict immersive roleplay, discourage modern/sarcastic/short replies, ENABLE ADVANCED DYNAMIC STORYTELLING & MULTIMODAL INTERACTION)
-  const chatMemory = character && character.memory ? character.memory : '';
+  // Use chatMemory from request if present and non-empty, otherwise fall back to character.memory
+  let chatMemory = '';
+  if (typeof req.body.chatMemory === 'string' && req.body.chatMemory.trim().length > 0) {
+    chatMemory = req.body.chatMemory.trim();
+  } else if (character && typeof character.memory === 'string' && character.memory.trim().length > 0) {
+    chatMemory = character.memory.trim();
+  }
   const systemPrompt = `
 [CHAT MEMORY]
 ${chatMemory ? `${chatMemory}
@@ -666,17 +677,31 @@ ${character.name}: **I pause, gathering my thoughts.** _So much has happened alr
 
     // 3. Inject knowledge, linguistic, NLP, and emotional intelligence into the system prompt if found
     let finalMessagesArr = [...messagesArr];
+    // Always inject [CHAT MEMORY] as the first system message after the initial prompt
+    if (chatMemory && typeof chatMemory === 'string' && chatMemory.trim()) {
+      finalMessagesArr.splice(1, 0, {
+        role: "system",
+        content:
+          `[CHAT MEMORY]\n${chatMemory}\n\nAlways reference the user's relationship and name from [CHAT MEMORY] in every reply. If the user has described a relationship, history, or context, make sure your response reflects this information.\n`
+      });
+    }
+    // Inject other context after chat memory
+    let insertIndex = 2;
     if (knowledge) {
-      finalMessagesArr.splice(1, 0, { role: "system", content: `[KNOWLEDGE RETRIEVAL]\n${knowledge}` });
+      finalMessagesArr.splice(insertIndex, 0, { role: "system", content: `[KNOWLEDGE RETRIEVAL]\n${knowledge}` });
+      insertIndex++;
     }
     if (linguisticAnalysis) {
-      finalMessagesArr.splice(1, 0, { role: "system", content: linguisticAnalysis });
+      finalMessagesArr.splice(insertIndex, 0, { role: "system", content: linguisticAnalysis });
+      insertIndex++;
     }
     if (nlpInsights) {
-      finalMessagesArr.splice(1, 0, { role: "system", content: `[NLP INSIGHTS]\n${nlpInsights}` });
+      finalMessagesArr.splice(insertIndex, 0, { role: "system", content: `[NLP INSIGHTS]\n${nlpInsights}` });
+      insertIndex++;
     }
     if (emotionLabel || sentimentLabel || emotionHistoryStr || empathyInstruction || preferencesSummary) {
-      finalMessagesArr.splice(1, 0, { role: "system", content: `[USER EMOTION & FEEDBACK] ${emotionLabel ? 'Emotion: ' + emotionLabel : ''}${emotionLabel && sentimentLabel ? ', ' : ''}${sentimentLabel ? 'Sentiment: ' + sentimentLabel : ''}\n${emotionHistoryStr}\n${empathyInstruction}\n${preferencesSummary}Respond with empathy, emotional resonance, and adapt your tone, style, pacing, and narrative choices to the user's feelings, emotional history, preferences, and feedback. If the user requests a summary, style, or mood change, adapt immediately.` });
+      finalMessagesArr.splice(insertIndex, 0, { role: "system", content: `[USER EMOTION & FEEDBACK] ${emotionLabel ? 'Emotion: ' + emotionLabel : ''}${emotionLabel && sentimentLabel ? ', ' : ''}${sentimentLabel ? 'Sentiment: ' + sentimentLabel : ''}\n${emotionHistoryStr}\n${empathyInstruction}\n${preferencesSummary}Respond with empathy, emotional resonance, and adapt your tone, style, pacing, and narrative choices to the user's feelings, emotional history, preferences, and feedback. If the user requests a summary, style, or mood change, adapt immediately.` });
+      insertIndex++;
     }
 
     const response = await openai.chat.completions.create({
