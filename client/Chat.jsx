@@ -90,17 +90,24 @@ const Chat = ({
 
   // Handler for regenerate button
   const handleRegenerate = (aiMsgIndex) => {
-    // Clear the AI message text
-    if (typeof messages[aiMsgIndex] === "object") {
-      messages[aiMsgIndex].text = "";
+    // Find the most recent user message before this AI message
+    let userMsgIndex = aiMsgIndex - 1;
+    while (userMsgIndex >= 0 && !messages[userMsgIndex].isUser) {
+      userMsgIndex--;
     }
-    // Simulate pendingAI (you should replace this with your actual regeneration logic)
-    // Optionally, you could call a prop/callback to trigger backend regeneration here
-    // Example: onRegenerate(messages, aiMsgIndex)
-    // For now, just force a re-render
+    if (userMsgIndex >= 0) {
+      // Remove the AI message to be regenerated
+      messages.splice(aiMsgIndex, 1);
+      // Call handleSendMessage with the latest user message text and active character
+      // Simulate inputMessage and setInputMessage for this call
+      setInputMessage(messages[userMsgIndex].text);
+      // Use a synthetic event for form submission
+      const fakeEvent = { preventDefault: () => {} };
+      handleSendMessage(fakeEvent, activeCharacter?.id);
+      setInputMessage("");
+    }
     setEditingIndex(null);
     setEditDraft("");
-    // If you have a state setter for messages, call it here to update the UI
   };
 
   return (
