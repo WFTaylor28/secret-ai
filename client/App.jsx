@@ -276,6 +276,7 @@ const App = () => {
           character: character,      // FIX: must be 'character' object, not just fields
           history: history,          // Send chat history for memory
           userId: user.id,
+          chatMemory: chatMemories[characterId] || "", // Pass chat memory modal data for this character
         }),
       });
       let data;
