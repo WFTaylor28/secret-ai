@@ -60,6 +60,49 @@ const Chat = ({
     }
   }, [pendingAI]);
 
+  // Track which message is being edited and its draft text
+  const [editingIndex, setEditingIndex] = React.useState(null);
+  const [editDraft, setEditDraft] = React.useState("");
+
+  // Handler to start editing a message
+  const handleEditClick = (idx) => {
+    setEditingIndex(idx);
+    setEditDraft(messages[idx].text);
+  };
+
+  // Handler to save edited message
+  const handleEditSave = (idx) => {
+    // Update the message text in messages array
+    // This assumes messages is managed by parent, so you may need to lift state or add a callback
+    if (typeof messages[idx] === "object") {
+      messages[idx].text = editDraft;
+    }
+    setEditingIndex(null);
+    setEditDraft("");
+    // TODO: Optionally call a parent callback to persist changes
+  };
+
+  // Handler to cancel editing
+  const handleEditCancel = () => {
+    setEditingIndex(null);
+    setEditDraft("");
+  };
+
+  // Handler for regenerate button
+  const handleRegenerate = (aiMsgIndex) => {
+    // Clear the AI message text
+    if (typeof messages[aiMsgIndex] === "object") {
+      messages[aiMsgIndex].text = "";
+    }
+    // Simulate pendingAI (you should replace this with your actual regeneration logic)
+    // Optionally, you could call a prop/callback to trigger backend regeneration here
+    // Example: onRegenerate(messages, aiMsgIndex)
+    // For now, just force a re-render
+    setEditingIndex(null);
+    setEditDraft("");
+    // If you have a state setter for messages, call it here to update the UI
+  };
+
   return (
     <section>
       <h2 className="text-3xl font-bold mb-6">Your Chats</h2>
@@ -122,42 +165,136 @@ const Chat = ({
                 ref={messagesContainerRef}
               >
                 {messages.map((msg, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-start ${msg.isUser ? 'justify-end' : 'justify-start'}`}
-                  >
-                    {/* Avatar/profile: always same size for user and character */}
-                    {msg.isUser ? (
-                      <>
+                  <div key={index}>
+                    <div className={`flex items-start ${msg.isUser ? 'justify-end' : 'justify-start'}`}>
+                      {/* Avatar/profile: always same size for user and character */}
+                      {msg.isUser ? (
                         <div className="flex items-center">
                           <div className="order-2 flex-shrink-0 ml-2">
                             <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white text-lg font-bold border border-blue-400">
                               U
                             </div>
                           </div>
-                          <div
-                            className="max-w-md px-4 py-2 rounded-lg order-1 ml-3"
-                            style={{ background: '#23272f', color: '#fff' }}
-                          >
-                            <p className="text-sm" dangerouslySetInnerHTML={renderFormattedMessage(msg.text, true)} />
+                          <div className="order-1 ml-3">
+                            {/* Inline edit mode for user message */}
+                            {editingIndex === index ? (
+                              <div className="max-w-md px-4 py-2 rounded-lg bg-gray-800" style={{ color: '#fff' }}>
+                                <textarea
+                                  className="w-full bg-gray-900 text-white rounded p-2 mb-2 resize-none"
+                                  value={editDraft}
+                                  onChange={e => setEditDraft(e.target.value)}
+                                  rows={2}
+                                  autoFocus
+                                />
+                                <div className="flex justify-end space-x-2">
+                                  <button
+                                    className="px-3 py-1 rounded bg-pink-500 text-white hover:bg-pink-600"
+                                    onClick={() => handleEditSave(index)}
+                                  >Save</button>
+                                  <button
+                                    className="px-3 py-1 rounded bg-gray-700 text-gray-200 hover:bg-gray-600"
+                                    onClick={handleEditCancel}
+                                  >Cancel</button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <div
+                                  className="max-w-md px-4 py-2 rounded-lg"
+                                  style={{ background: '#23272f', color: '#fff' }}
+                                >
+                                  <p className="text-sm" dangerouslySetInnerHTML={renderFormattedMessage(msg.text, true)} />
+                                </div>
+                                {/* Edit icon directly under bubble for sent messages only (not typing or pendingAI) */}
+                                {(!isTyping && !pendingAI) && (
+                                  <div className="flex justify-end mt-1">
+                                    <button
+                                      className="p-1 rounded hover:bg-gray-700"
+                                      style={{ background: 'none', border: 'none' }}
+                                      title="Edit message"
+                                      onClick={() => handleEditClick(index)}
+                                    >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#888" viewBox="0 0 16 16">
+                                        <path d="M12.146 2.146a.5.5 0 0 1 .708 0l1 1a.5.5 0 0 1 0 .708l-8.5 8.5a.5.5 0 0 1-.168.11l-3 1a.5.5 0 0 1-.638-.638l1-3a.5.5 0 0 1 .11-.168l8.5-8.5zm1.708 1.708L13 3.207 12.793 3 13.854 4.061l.001-.001zm-1.061-1.061L11.793 2 3.5 10.293l-.707.707-1 3 3-1 .707-.707L14 4.207l-.207-.207z"/>
+                                      </svg>
+                                    </button>
+                                  </div>
+                                )}
+                              </>
+                            )}
                           </div>
                         </div>
-                      </>
-                    ) : (
-                      <>
-                        <img
-                          src={activeCharacter.image}
-                          alt={activeCharacter.name}
-                          className="w-12 h-12 rounded-full object-cover mr-2 border border-purple-600 bg-gray-900 flex-shrink-0"
-                        />
-                        <div
-                          className="max-w-md px-4 py-2 rounded-lg"
-                          style={{ background: '#23272f', color: '#fff' }}
-                        >
-                          <p className="text-sm" dangerouslySetInnerHTML={renderFormattedMessage(msg.text, false)} />
-                        </div>
-                      </>
-                    )}
+                      ) : (
+                        <>
+                          <img
+                            src={activeCharacter.image}
+                            alt={activeCharacter.name}
+                            className="w-12 h-12 rounded-full object-cover mr-2 border border-purple-600 bg-gray-900 flex-shrink-0"
+                          />
+                          <div>
+                            {/* Inline edit mode for character message */}
+                            {editingIndex === index ? (
+                              <div className="max-w-md px-4 py-2 rounded-lg bg-gray-800" style={{ color: '#fff' }}>
+                                <textarea
+                                  className="w-full bg-gray-900 text-white rounded p-2 mb-2 resize-none"
+                                  value={editDraft}
+                                  onChange={e => setEditDraft(e.target.value)}
+                                  rows={2}
+                                  autoFocus
+                                />
+                                <div className="flex justify-end space-x-2">
+                                  <button
+                                    className="px-3 py-1 rounded bg-pink-500 text-white hover:bg-pink-600"
+                                    onClick={() => handleEditSave(index)}
+                                  >Save</button>
+                                  <button
+                                    className="px-3 py-1 rounded bg-gray-700 text-gray-200 hover:bg-gray-600"
+                                    onClick={handleEditCancel}
+                                  >Cancel</button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <div
+                                  className="max-w-md px-4 py-2 rounded-lg"
+                                  style={{ background: '#23272f', color: '#fff' }}
+                                >
+                                  <p className="text-sm" dangerouslySetInnerHTML={renderFormattedMessage(msg.text, false)} />
+                                </div>
+                                {/* Edit icon directly under bubble for sent messages only (not typing or pendingAI) */}
+                                {(!isTyping && !pendingAI) && (
+                                  <div className="flex justify-start mt-1 space-x-2">
+                                    <button
+                                      className="p-1 rounded hover:bg-gray-700"
+                                      style={{ background: 'none', border: 'none' }}
+                                      title="Edit message"
+                                      onClick={() => handleEditClick(index)}
+                                    >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#888" viewBox="0 0 16 16">
+                                        <path d="M12.146 2.146a.5.5 0 0 1 .708 0l1 1a.5.5 0 0 1 0 .708l-8.5 8.5a.5.5 0 0 1-.168.11l-3 1a.5.5 0 0 1-.638-.638l1-3a.5.5 0 0 1 .11-.168l8.5-8.5zm1.708 1.708L13 3.207 12.793 3 13.854 4.061l.001-.001zm-1.061-1.061L11.793 2 3.5 10.293l-.707.707-1 3 3-1 .707-.707L14 4.207l-.207-.207z"/>
+                                      </svg>
+                                    </button>
+                                    {/* Regenerate button: only for most recent AI message, not first, not typing/pendingAI */}
+                                    {index === messages.length - 1 && !msg.isUser && index !== 0 && (!isTyping && !pendingAI) && (
+                                      <button
+                                        className="p-1 rounded hover:bg-gray-700"
+                                        style={{ background: 'none', border: 'none' }}
+                                        title="Regenerate response"
+                                        onClick={() => handleRegenerate(index)}
+                                      >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#888" viewBox="0 0 16 16">
+                                          <path d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 1 1 .908-.418A4 4 0 1 0 8 4V1.5a.5.5 0 0 1 1 0v3A.5.5 0 0 1 8.5 5H5a.5.5 0 0 1 0-1h2.5V3.5a.5.5 0 0 1 1 0V5A.5.5 0 0 1 8.5 6H5a.5.5 0 0 1 0-1h2.5V3.5A.5.5 0 0 1 8 3z"/>
+                                        </svg>
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 ))}
                 {/* AI is typing bubble ("..."), only if not animating reply */}
