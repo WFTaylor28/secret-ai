@@ -130,13 +130,13 @@ const Chat = ({
                     {msg.isUser ? (
                       <>
                         <div className="flex items-center">
-                          <div className="order-2 flex-shrink-0 mr-2">
+                          <div className="order-2 flex-shrink-0 ml-2">
                             <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white text-lg font-bold border border-blue-400">
                               U
                             </div>
                           </div>
                           <div
-                            className="max-w-md px-4 py-2 rounded-lg order-1"
+                            className="max-w-md px-4 py-2 rounded-lg order-1 ml-3"
                             style={{ background: '#23272f', color: '#fff' }}
                           >
                             <p className="text-sm" dangerouslySetInnerHTML={renderFormattedMessage(msg.text, true)} />
