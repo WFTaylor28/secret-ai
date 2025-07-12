@@ -33,8 +33,8 @@ const App = () => {
   const [showBilling, setShowBilling] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showFAQ, setShowFAQ] = useState(false); // <-- Move this here with other modal states
-  // Mock user data
-  const [user] = useState({
+  // Mock user data as static object
+  const user = {
     id: 1,
     username: "User123",
     characters: [
@@ -84,7 +84,7 @@ const App = () => {
         firstMessage: '*meets your gaze with a knowing smile* "Careful who you trust in these halls. Not every secret is meant to be uncovered."',
       },
     ],
-  });
+  };
 
   // Character creation form state (move this up)
   const [newCharacter, setNewCharacter] = useState({
@@ -719,17 +719,25 @@ const App = () => {
           />
           <Route
             path="/chat/:characterId"
-            element={<ChatPage
-              user={user}
-              getChatSession={getChatSession}
-              handleSendMessage={handleSendMessage}
-              inputMessage={inputMessage}
-              setInputMessage={setInputMessage}
-              isTyping={isTyping}
-              pendingAI={pendingAI}
-              onShowChatMemory={handleShowChatMemory}
-              openCharacterProfile={openCharacterProfile}
-            />}
+            element={
+              user ? (
+                <ChatPage
+                  user={user}
+                  getChatSession={getChatSession}
+                  handleSendMessage={handleSendMessage}
+                  inputMessage={inputMessage}
+                  setInputMessage={setInputMessage}
+                  isTyping={isTyping}
+                  pendingAI={pendingAI}
+                  onShowChatMemory={handleShowChatMemory}
+                  openCharacterProfile={openCharacterProfile}
+                  chatSessions={chatSessions}
+                  allCharacters={allCharacters}
+                />
+              ) : (
+                <div>Loading user...</div>
+              )
+            }
           />
           <Route
             path="/search"
@@ -1230,14 +1238,17 @@ const App = () => {
 }
 
 // ChatPage component for /chat/:characterId
-function ChatPage({ user, getChatSession, handleSendMessage, inputMessage, setInputMessage, isTyping, pendingAI, onShowChatMemory, openCharacterProfile }) {
+function ChatPage({ user, getChatSession, handleSendMessage, inputMessage, setInputMessage, isTyping, pendingAI, onShowChatMemory, openCharacterProfile, chatSessions = [], allCharacters = [] }) {
   const { characterId } = useParams();
-  const character = user.characters.find((c) => c.id === Number(characterId));
-  const session = getChatSession(Number(characterId));
+  // Defensive fallback for user
+  const safeUser = user || { characters: [] };
+  if (!safeUser || !safeUser.characters) {
+    return <div className="text-center py-12">Loading character...</div>;
+  }
+  const character = safeUser.characters.find((c) => c.id === Number(characterId));
   if (!character) {
     return <div className="text-center text-red-400 py-12">Character not found.</div>;
   }
-  // Fullscreen chat experience
   return (
     <div className="w-full h-[80vh] md:h-[85vh] flex items-center justify-center relative">
       <div className="w-full max-w-3xl h-full flex flex-col bg-gradient-to-br from-[#2d1e4f] to-[#1a1333] rounded-3xl shadow-2xl border border-white/10 p-0 md:p-4 relative">
@@ -1256,26 +1267,25 @@ function ChatPage({ user, getChatSession, handleSendMessage, inputMessage, setIn
           </button>
         </div>
         <Chat
-          user={user}
+          user={safeUser}
           activeCharacter={character}
           setActiveCharacter={(char) => {
             if (char && char.id !== character.id) {
-              // Navigate to the selected character's chat
               window.location.hash = `#/chat/${char.id}`;
             }
           }}
-          messages={session.messages}
+          messages={getChatSession(Number(characterId)).messages}
           inputMessage={inputMessage}
           setInputMessage={setInputMessage}
           handleSendMessage={(e) => handleSendMessage(Number(characterId), e)}
           isTyping={isTyping[character.id] || false}
           pendingAI={pendingAI[character.id] || null}
+          chatSessions={chatSessions}
+          allCharacters={allCharacters}
         />
       </div>
     </div>
   );
 }
-
-// ...existing code...
 
 export default App;
