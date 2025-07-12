@@ -36,7 +36,7 @@ function renderFormattedMessage(text, isUser) {
 }
 
 const Chat = ({
-  user,
+  user = { characters: [] },
   activeCharacter,
   setActiveCharacter,
   messages,
@@ -45,6 +45,8 @@ const Chat = ({
   handleSendMessage,
   isTyping,
   pendingAI,
+  chatSessions = [],
+  allCharacters = [],
 }) => {
   // Ref for the message list container
   const messagesContainerRef = useRef(null);
@@ -66,28 +68,36 @@ const Chat = ({
         <div className="lg:col-span-1">
           <h3 className="text-xl font-semibold mb-4">Characters</h3>
           <div className="space-y-2 max-h-[32rem] overflow-y-auto pr-2">
-            {user.characters.map((character) => (
-              <div
-                key={character.id}
-                onClick={() => setActiveCharacter(character)}
-                className={`relative bg-gray-900 p-3 rounded-xl flex items-center space-x-3 cursor-pointer transition-all duration-150 border-2 ${
-                  activeCharacter?.id === character.id
-                    ? "border-pink-400 shadow-lg ring-2 ring-pink-400"
-                    : "border-transparent hover:bg-gray-800"
-                }`}
-                style={{ boxSizing: 'border-box' }}
-              >
-                <img
-                  src={character.image}
-                  alt={character.name}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-medium truncate">{character.name}</h4>
-                  <p className="text-xs text-gray-400 truncate">{character.description}</p>
-                </div>
-              </div>
-            ))}
+            {chatSessions.length === 0 ? (
+              <div className="text-gray-400 text-center py-8">You have no chats yet.</div>
+            ) : (
+              chatSessions.map((session) => {
+                const character = allCharacters.find(c => c.id === session.characterId);
+                if (!character) return null;
+                return (
+                  <div
+                    key={character.id}
+                    onClick={() => setActiveCharacter(character)}
+                    className={`relative bg-gray-900 p-3 rounded-xl flex items-center space-x-3 cursor-pointer transition-all duration-150 border-2 ${
+                      activeCharacter?.id === character.id
+                        ? "border-pink-400 shadow-lg ring-2 ring-pink-400"
+                        : "border-transparent hover:bg-gray-800"
+                    }`}
+                    style={{ boxSizing: 'border-box' }}
+                  >
+                    <img
+                      src={character.image}
+                      alt={character.name}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium truncate">{character.name}</h4>
+                      <p className="text-xs text-gray-400 truncate">{character.description}</p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
         {/* Chat Interface */}
