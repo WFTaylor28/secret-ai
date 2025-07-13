@@ -219,9 +219,12 @@ const App = () => {
   // Send message in chat (for /chat/:characterId)
   // Updated: support regeneration
   const handleSendMessage = async (characterId, e, options = {}) => {
-    e.preventDefault();
-    const { regenerate = false } = options;
-    if (!inputMessage.trim() && !regenerate) return;
+    console.log('[handleSendMessage] Called with:', { characterId, options });
+    // Fix: e is now second argument, not first
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+    const { regenerate = false, text: overrideText } = options;
+    const messageText = regenerate ? (overrideText || inputMessage) : inputMessage;
+    if (!messageText.trim()) return;
     if (isTyping[characterId]) return; // Prevent sending while AI is typing
 
     // Find or create chat session
@@ -235,15 +238,8 @@ const App = () => {
       setChatSessions((prev) => [...prev, session]);
     }
 
-    // If regenerating, reuse last user message
-    let userMessage;
-    if (regenerate) {
-      // Find last user message in session
-      const lastUserMsg = [...(session?.messages || [])].reverse().find(m => m.isUser);
-      userMessage = lastUserMsg ? { ...lastUserMsg } : { text: inputMessage, isUser: true };
-    } else {
-      userMessage = { text: inputMessage, isUser: true };
-    }
+    // If regenerating, reuse last user message but with correct text
+    let userMessage = { text: messageText, isUser: true };
 
     // Add user message (only if not regenerating)
     if (!regenerate) {
@@ -280,6 +276,7 @@ const App = () => {
 
       // Find character (from allCharacters)
       const character = allCharacters.find((c) => c.id === characterId);
+      console.log('[handleSendMessage] Sending POST to backend:', { message: userMessage.text, regenerate });
       // Prepare backend payload with all advanced fields
       const response = await fetch(BACKEND_URL, {
         method: "POST",
@@ -748,6 +745,7 @@ const App = () => {
                   openCharacterProfile={openCharacterProfile}
                   chatSessions={chatSessions}
                   allCharacters={allCharacters}
+                  setChatSessions={setChatSessions}
                 />
               ) : (
                 <div>Loading user...</div>
@@ -1253,7 +1251,7 @@ const App = () => {
 }
 
 // ChatPage component for /chat/:characterId
-function ChatPage({ user, getChatSession, handleSendMessage, inputMessage, setInputMessage, isTyping, pendingAI, onShowChatMemory, openCharacterProfile, chatSessions = [], allCharacters = [] }) {
+function ChatPage({ user, getChatSession, handleSendMessage, inputMessage, setInputMessage, isTyping, pendingAI, onShowChatMemory, openCharacterProfile, chatSessions = [], allCharacters = [], setChatSessions }) {
   const { characterId } = useParams();
   // Defensive fallback for user
   const safeUser = user || { characters: [] };
@@ -1264,6 +1262,14 @@ function ChatPage({ user, getChatSession, handleSendMessage, inputMessage, setIn
   if (!character) {
     return <div className="text-center text-red-400 py-12">Character not found.</div>;
   }
+  // Handler to save edited message
+  const handleEditMessage = (msgIndex, newText) => {
+    setChatSessions(prev => prev.map(s =>
+      s.characterId === Number(characterId)
+        ? { ...s, messages: s.messages.map((msg, idx) => idx === msgIndex ? { ...msg, text: newText } : msg) }
+        : s
+    ));
+  };
   return (
     <div className="w-full h-[80vh] md:h-[85vh] flex items-center justify-center relative">
       <div className="w-full max-w-3xl h-full flex flex-col bg-gradient-to-br from-[#2d1e4f] to-[#1a1333] rounded-3xl shadow-2xl border border-white/10 p-0 md:p-4 relative">
@@ -1292,7 +1298,16 @@ function ChatPage({ user, getChatSession, handleSendMessage, inputMessage, setIn
           messages={getChatSession(Number(characterId)).messages}
           inputMessage={inputMessage}
           setInputMessage={setInputMessage}
-          handleSendMessage={(e) => handleSendMessage(Number(characterId), e)}
+          handleSendMessage={(characterId, e, options) => handleSendMessage(characterId, e, options)}
+          onRegenerate={(aiMsgIndex) => {
+            // Remove the AI message at aiMsgIndex from the correct chat session
+            setChatSessions(prev => prev.map(s =>
+              s.characterId === Number(characterId)
+                ? { ...s, messages: s.messages.filter((_, idx) => idx !== aiMsgIndex) }
+                : s
+            ));
+          }}
+          onEditMessage={handleEditMessage}
           isTyping={isTyping[character.id] || false}
           pendingAI={pendingAI[character.id] || null}
           chatSessions={chatSessions}

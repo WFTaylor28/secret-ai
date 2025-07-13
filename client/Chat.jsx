@@ -47,6 +47,8 @@ const Chat = ({
   pendingAI,
   chatSessions = [],
   allCharacters = [],
+  onRegenerate,
+  onEditMessage,
 }) => {
   // Ref for the message list container
   const messagesContainerRef = useRef(null);
@@ -68,18 +70,16 @@ const Chat = ({
   const handleEditClick = (idx) => {
     setEditingIndex(idx);
     setEditDraft(messages[idx].text);
+    // Do NOT delete or modify the message here
   };
 
   // Handler to save edited message
   const handleEditSave = (idx) => {
-    // Update the message text in messages array
-    // This assumes messages is managed by parent, so you may need to lift state or add a callback
-    if (typeof messages[idx] === "object") {
-      messages[idx].text = editDraft;
+    if (onEditMessage) {
+      onEditMessage(idx, editDraft);
     }
     setEditingIndex(null);
     setEditDraft("");
-    // TODO: Optionally call a parent callback to persist changes
   };
 
   // Handler to cancel editing
@@ -90,20 +90,23 @@ const Chat = ({
 
   // Handler for regenerate button
   const handleRegenerate = (aiMsgIndex) => {
+    console.log('[Regenerate] Button clicked for AI message index:', aiMsgIndex);
     // Find the most recent user message before this AI message
     let userMsgIndex = aiMsgIndex - 1;
     while (userMsgIndex >= 0 && !messages[userMsgIndex].isUser) {
       userMsgIndex--;
     }
     if (userMsgIndex >= 0) {
-      // Remove the AI message to be regenerated
-      messages.splice(aiMsgIndex, 1);
-      // Call handleSendMessage with the latest user message text and active character
-      // Simulate inputMessage and setInputMessage for this call
-      setInputMessage(messages[userMsgIndex].text);
-      // Use a synthetic event for form submission
+      // Remove the AI message to be regenerated in parent state
+      if (onRegenerate) {
+        onRegenerate(aiMsgIndex);
+      }
+      // Pass the correct user message text directly to handleSendMessage
+      const userText = messages[userMsgIndex].text;
+      console.log('[Regenerate] Calling handleSendMessage with:', { characterId: activeCharacter?.id, userText });
       const fakeEvent = { preventDefault: () => {} };
-      handleSendMessage(activeCharacter?.id, fakeEvent, { regenerate: true });
+      if (typeof fakeEvent.preventDefault === 'function') fakeEvent.preventDefault();
+      handleSendMessage(activeCharacter?.id, fakeEvent, { regenerate: true, text: userText });
       setInputMessage("");
     }
     setEditingIndex(null);
@@ -338,7 +341,7 @@ const Chat = ({
                 <div ref={messagesEndRef} />
               </div>
               {/* Message Input */}
-              <form onSubmit={(e) => handleSendMessage(e, activeCharacter?.id)} className="flex space-x-2 mt-2">
+              <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(activeCharacter?.id, e); }} className="flex space-x-2 mt-2">
                 <input
                   type="text"
                   placeholder="Type your message..."
@@ -366,6 +369,24 @@ const Chat = ({
       </div>
     </section>
   );
+};
+
+import PropTypes from 'prop-types';
+
+Chat.propTypes = {
+  user: PropTypes.object,
+  activeCharacter: PropTypes.object,
+  setActiveCharacter: PropTypes.func,
+  messages: PropTypes.array,
+  inputMessage: PropTypes.string,
+  setInputMessage: PropTypes.func,
+  handleSendMessage: PropTypes.func,
+  isTyping: PropTypes.bool,
+  pendingAI: PropTypes.object,
+  chatSessions: PropTypes.array,
+  allCharacters: PropTypes.array,
+  onRegenerate: PropTypes.func,
+  onEditMessage: PropTypes.func,
 };
 
 export default Chat;
