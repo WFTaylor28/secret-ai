@@ -217,9 +217,11 @@ const App = () => {
   };
 
   // Send message in chat (for /chat/:characterId)
-  const handleSendMessage = async (characterId, e) => {
+  // Updated: support regeneration
+  const handleSendMessage = async (characterId, e, options = {}) => {
     e.preventDefault();
-    if (!inputMessage.trim()) return;
+    const { regenerate = false } = options;
+    if (!inputMessage.trim() && !regenerate) return;
     if (isTyping[characterId]) return; // Prevent sending while AI is typing
 
     // Find or create chat session
@@ -233,16 +235,27 @@ const App = () => {
       setChatSessions((prev) => [...prev, session]);
     }
 
-    const userMessage = { text: inputMessage, isUser: true };
-    // Add user message
-    setChatSessions((prev) =>
-      prev.map((s) =>
-        s.characterId === characterId
-          ? { ...s, messages: [...s.messages, userMessage], lastActive: new Date() }
-          : s
-      )
-    );
-    setInputMessage("");
+    // If regenerating, reuse last user message
+    let userMessage;
+    if (regenerate) {
+      // Find last user message in session
+      const lastUserMsg = [...(session?.messages || [])].reverse().find(m => m.isUser);
+      userMessage = lastUserMsg ? { ...lastUserMsg } : { text: inputMessage, isUser: true };
+    } else {
+      userMessage = { text: inputMessage, isUser: true };
+    }
+
+    // Add user message (only if not regenerating)
+    if (!regenerate) {
+      setChatSessions((prev) =>
+        prev.map((s) =>
+          s.characterId === characterId
+            ? { ...s, messages: [...s.messages, userMessage], lastActive: new Date() }
+            : s
+        )
+      );
+      setInputMessage("");
+    }
     setIsTyping((prev) => ({ ...prev, [characterId]: true }));
     setError("");
     setPendingAI((prev) => ({ ...prev, [characterId]: null }));
@@ -272,11 +285,12 @@ const App = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: userMessage.text, // FIX: must be 'message' not 'prompt'
-          character: character,      // FIX: must be 'character' object, not just fields
-          history: history,          // Send chat history for memory
+          message: userMessage.text,
+          character: character,
+          history: history,
           userId: user.id,
-          chatMemory: chatMemories[characterId] || "", // Pass chat memory modal data for this character
+          chatMemory: chatMemories[characterId] || "",
+          regenerate,
         }),
       });
       let data;
