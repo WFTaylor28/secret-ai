@@ -393,6 +393,13 @@ app.post("/chat", async (req, res) => {
   } else if (character && typeof character.memory === 'string' && character.memory.trim().length > 0) {
     chatMemory = character.memory.trim();
   }
+
+  // --- Inject frontend 'prompt' field for recent actions and 'do not repeat' instructions ---
+  let frontendPrompt = '';
+  if (typeof req.body.prompt === 'string' && req.body.prompt.trim().length > 0) {
+    frontendPrompt = req.body.prompt.trim();
+  }
+
   const systemPrompt = `
 [CHAT MEMORY]
 ${chatMemory ? `${chatMemory}
@@ -403,6 +410,8 @@ Chat Memory: "Mira and I already know each other, my name is Will."
 User: How are you?
 ${character.name}: **I smile warmly at Will, feeling the comfort of our shared history.** _It's always easier to talk to someone you know._ "I'm doing well, Will. It's good to see you again. How have you been?" **I lean in, remembering the times Mira and I spent together.**
 ` : 'No chat memory provided.'}
+
+${frontendPrompt ? `[RECENT ACTIONS]\n${frontendPrompt}\n` : ''}
 
 [CHARACTER PROFILE]
 Name: ${character.name}
