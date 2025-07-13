@@ -88,7 +88,18 @@ app.post("/chat", async (req, res) => {
   // --- Continuous Learning & Improvement: Track User Feedback, Preferences, and Adapt AI ---
   // Move destructure to top so character/message/history are available for all logic
   // Destructure once at the top for all logic
-  const { message, character, history } = req.body;
+  const { message, character, history, regenerate } = req.body;
+  // Regeneration support: use last user message from history if regenerate is true
+  let effectiveMessage = message;
+  if (regenerate && Array.isArray(history)) {
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].isUser) {
+        effectiveMessage = history[i].text;
+        break;
+      }
+    }
+    console.log(`[REGENERATE MODE] Using message: "${effectiveMessage}"`);
+  }
   // Debug: Log the full request payload and chat memory
   console.log("[DEBUG] Incoming /chat request payload:", JSON.stringify(req.body, null, 2));
   if (character && character.memory) {
@@ -102,7 +113,7 @@ app.post("/chat", async (req, res) => {
     console.log("[DEBUG] No chatMemory provided in payload.");
   }
   // Validate character and message at the very top before any use
-  if (!message || !character || !character.name || !character.description) {
+  if (!effectiveMessage || !character || !character.name || !character.description) {
     return res.status(400).json({ error: "Character must include 'name' and 'description' and a message must be provided." });
   }
   if (!global.conversationEmotionHistory) global.conversationEmotionHistory = {};
@@ -133,7 +144,7 @@ app.post("/chat", async (req, res) => {
   let detectedFeedback = [];
   let detectedPreferences = {};
   let customInstructions = [];
-  const messageText = typeof req.body.message === 'string' ? req.body.message : '';
+  const messageText = typeof effectiveMessage === 'string' ? effectiveMessage : '';
   for (const { pattern, action } of feedbackPatterns) {
     const matches = typeof messageText === 'string' ? messageText.match(pattern) : null;
     if (matches) {
@@ -190,7 +201,7 @@ app.post("/chat", async (req, res) => {
     const emotionRes = await fetch('https://api-inference.huggingface.co/models/j-hartmann/emotion-english-distilroberta-base', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY || ''}` },
-      body: JSON.stringify({ inputs: req.body.message })
+      body: JSON.stringify({ inputs: effectiveMessage })
     });
     if (emotionRes.ok) {
       const emotionData = await emotionRes.json();
@@ -202,7 +213,7 @@ app.post("/chat", async (req, res) => {
     const sentimentRes = await fetch('https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment-latest', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY || ''}` },
-      body: JSON.stringify({ inputs: req.body.message })
+      body: JSON.stringify({ inputs: effectiveMessage })
     });
     if (sentimentRes.ok) {
       const sentimentData = await sentimentRes.json();
