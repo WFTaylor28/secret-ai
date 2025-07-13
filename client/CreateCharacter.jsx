@@ -5,6 +5,7 @@ const CreateCharacter = ({
   handleInputChange,
   handleImageChange,
   handleSubmit,
+  tagOptions = [],
 }) => (
   <section>
     <h2 className="text-3xl font-bold mb-6">Create New Character</h2>
@@ -169,6 +170,43 @@ const CreateCharacter = ({
           />
           <span>NSFW Content</span>
         </label>
+      </div>
+      <div>
+        <label className="block text-sm font-medium mb-1">Tags (genre, archetype, theme)</label>
+        <p className="text-xs text-gray-400 mb-2">
+          Tags help others find your character by genre, archetype, or theme. These tags are used for search and filters when exploring public characters.<br />
+          <strong>Examples:</strong> Fantasy, Cyberpunk, Royalty, Older, Younger (18+), School (18+), Evil, Good, Romance, Hero, Villain, Detective, Warrior, Mage, Sci-Fi, Slice of Life, Historical, Comedy, Tragedy, Mentor, Rival, Outcast, Leader, Rebel, Guardian, Trickster, etc.
+        </p>
+        {/* Multi-select dropdown for tags */}
+        <div className="w-full bg-gray-800 rounded-lg px-4 py-2">
+          <div className="flex flex-wrap gap-2">
+            {tagOptions.map(tag => (
+              <label key={tag} className="flex items-center space-x-1 bg-gray-700 rounded px-2 py-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={newCharacter.tags?.includes(tag) || false}
+                  onChange={e => {
+                    let updatedTags = Array.isArray(newCharacter.tags) ? [...newCharacter.tags] : [];
+                    if (e.target.checked) {
+                      updatedTags.push(tag);
+                    } else {
+                      updatedTags = updatedTags.filter(t => t !== tag);
+                    }
+                    handleInputChange({
+                      target: {
+                        name: "tags",
+                        value: updatedTags,
+                        type: "checkbox"
+                      }
+                    });
+                  }}
+                  className="rounded text-purple-600 focus:ring-purple-500"
+                />
+                <span className="text-xs">{tag}</span>
+              </label>
+            ))}
+          </div>
+        </div>
       </div>
       <div className="pt-2">
         <button
