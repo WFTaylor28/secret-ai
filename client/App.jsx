@@ -16,8 +16,57 @@ const glass = "backdrop-blur-md bg-white/10 border border-white/20 shadow-xl";
 const fadeIn = "transition-all duration-500 ease-in-out";
 
 const App = () => {
+  // Tag filter dropdown state
+  const [showTagFilter, setShowTagFilter] = useState(false);
+  // NSFW toggle state (separate for home and search)
+  const [showNSFWHome, setShowNSFWHome] = useState(false);
+  const [showNSFWSearch, setShowNSFWSearch] = useState(false);
   // Search bar state
   const [searchQuery, setSearchQuery] = useState("");
+  // Tag filter state
+  const TAG_OPTIONS = [
+    "Milf",
+    "Girl Friend",
+    "Teacher",
+    "Goddess",
+    "Anime",
+    "OC",
+    "Adventurer",
+    "Alien",
+    "Monster",
+    "Knight",
+    "Princess",
+    "Ghost",
+    "Spirit",
+    "Witch",
+    "Vampire",
+    "Werewolf",
+    "Elf",
+    "Dwarf",
+    "Angel",
+    "Demon",
+    "Scientist",
+    "Doctor",
+    "Athlete",
+    "Artist",
+    "Musician",
+    "Hacker",
+    "Spy",
+    "Therapist",
+    "Giant",
+    "Magic",
+    "Criminal",
+    "Prisoner",
+    "Fugitive",
+    "Size Difference",
+    "Fantasy",
+    "LGTBQ+",
+    "Straight",
+    "Gay",
+    "Bisexual",
+    "Furry"
+  ];
+  const [selectedTags, setSelectedTags] = useState([]);
   const [editCharacter, setEditCharacter] = useState(null); // character object or null
   // Chat memory modal and per-character memory
   const [showChatMemory, setShowChatMemory] = useState(false);
@@ -33,8 +82,8 @@ const App = () => {
   const [showBilling, setShowBilling] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showFAQ, setShowFAQ] = useState(false); // <-- Move this here with other modal states
-  // Mock user data as static object
-  const user = {
+  // User stateful for character deletion
+  const [user, setUser] = useState({
     id: 1,
     username: "User123",
     characters: [
@@ -84,7 +133,7 @@ const App = () => {
         firstMessage: '*meets your gaze with a knowing smile* "Careful who you trust in these halls. Not every secret is meant to be uncovered."',
       },
     ],
-  };
+  });
 
   // Character creation form state (move this up)
   const [newCharacter, setNewCharacter] = useState({
@@ -99,6 +148,7 @@ const App = () => {
     scenario: "",
     isPublic: false,
     nsfw: false,
+    tags: [],
   });
 
   // Chat sessions: [{ characterId, messages: [], lastActive, ... }]
@@ -111,13 +161,17 @@ const App = () => {
   const allCharacters = [...user.characters, ...createdCharacters];
 
   // Filtered characters (include new and created)
+  // Show ALL public characters, including NSFW, on home page
   const publicCharacters = allCharacters.filter((character) => character.isPublic);
   const privateCharacters = allCharacters.filter((character) => !character.isPublic);
 
-  // Filtered characters for search (improved: includes all fields and all characters)
+  // Filtered characters for search (includes tag filter and NSFW toggle)
   const filteredCharacters = allCharacters.filter((character) => {
     const query = searchQuery.toLowerCase();
-    return (
+    // Tag filter: character must have ALL selected tags
+    const hasTags = selectedTags.length === 0 || (character.tags && selectedTags.every(tag => character.tags.includes(tag)));
+    // Text search
+    const matchesText = (
       character.name?.toLowerCase().includes(query) ||
       character.description?.toLowerCase().includes(query) ||
       character.backstory?.toLowerCase().includes(query) ||
@@ -127,6 +181,8 @@ const App = () => {
       character.accent?.toLowerCase().includes(query) ||
       character.scenario?.toLowerCase().includes(query)
     );
+    const matchesNSFW = showNSFWSearch ? true : !character.nsfw;
+    return hasTags && matchesText && matchesNSFW;
   });
 
   // Chat UI state (for /chat/:characterId)
@@ -153,10 +209,18 @@ const App = () => {
   // Handle input changes in character form
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setNewCharacter((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    // Special handling for tags array
+    if (name === "tags") {
+      setNewCharacter((prev) => ({
+        ...prev,
+        tags: value,
+      }));
+    } else {
+      setNewCharacter((prev) => ({
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      }));
+    }
   };
 
   // Handle file upload (show crop modal)
@@ -457,9 +521,11 @@ const App = () => {
   const confirmDeleteCharacter = () => {
     if (characterToDelete) {
       setCreatedCharacters((prev) => prev.filter((char) => char.id !== characterToDelete.id));
-      if (user && user.characters) {
-        user.characters = user.characters.filter((char) => char.id !== characterToDelete.id);
-      }
+      // Always update user.characters via setUser for stateful update
+      setUser(prev => ({
+        ...prev,
+        characters: prev.characters.filter((char) => char.id !== characterToDelete.id)
+      }));
     }
     setShowDeleteModal(false);
     setCharacterToDelete(null);
@@ -606,9 +672,9 @@ const App = () => {
               Create Character
             </button>
           </div>
-          {/* Search Bar */}
-          <div className="flex-1 flex justify-center mx-4">
-            <form onSubmit={handleSearchSubmit} className="w-full max-w-xs">
+          {/* Search Bar with Filter Button */}
+          <div className="flex-1 flex justify-center mx-4 relative">
+            <form onSubmit={handleSearchSubmit} className="w-full max-w-xs flex items-center">
               <input
                 type="text"
                 placeholder="Search characters..."
@@ -617,7 +683,68 @@ const App = () => {
                 className="w-full px-4 py-2 rounded-full bg-white/20 text-white placeholder-white/60 border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-400 transition-all"
                 style={{minWidth: 180}}
               />
+              <button
+                type="button"
+                className="ml-2 px-3 py-2 rounded-full bg-pink-600 text-white font-semibold shadow hover:bg-pink-700 transition-all flex items-center"
+                onClick={() => setShowTagFilter((prev) => !prev)}
+                aria-label="Filter by tags"
+              >
+                <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="mr-1"><path d="M4 6h16M6 12h12M8 18h8"/></svg>
+                Filter
+                {selectedTags.length > 0 && (
+                  <span className="ml-2 bg-white/20 text-xs px-2 py-1 rounded-full">{selectedTags.length}</span>
+                )}
+              </button>
             </form>
+            {/* Tag Filter Dropdown */}
+            {showTagFilter && (
+              <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-80 max-w-xs bg-gradient-to-br from-[#2d1e4f] to-[#1a1333] border border-white/10 rounded-xl shadow-2xl z-50 animate-fade-in p-4">
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {TAG_OPTIONS.map(tag => (
+                    <label key={tag} className={`flex items-center px-2 py-1 rounded-full cursor-pointer text-xs font-medium transition-all ${selectedTags.includes(tag) ? 'bg-pink-600 text-white' : 'bg-white/10 text-white/80 hover:bg-pink-700/30'}`}>
+                      <input
+                        type="checkbox"
+                        checked={selectedTags.includes(tag)}
+                        onChange={e => {
+                          setSelectedTags(prev =>
+                            e.target.checked
+                              ? [...prev, tag]
+                              : prev.filter(t => t !== tag)
+                          );
+                        }}
+                        className="mr-1 accent-pink-500"
+                      />
+                      {tag}
+                    </label>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <label className="flex items-center gap-2 text-xs font-medium">
+                    <input
+                      type="checkbox"
+                      checked={showNSFWSearch}
+                      onChange={e => setShowNSFWSearch(e.target.checked)}
+                      className="accent-red-500"
+                    />
+                    Show NSFW Characters
+                  </label>
+                </div>
+                <div className="flex justify-end gap-2 mt-2">
+                  <button
+                    className="px-4 py-1 rounded bg-gray-700 text-white text-xs hover:bg-gray-800"
+                    onClick={() => setSelectedTags([])}
+                  >
+                    Clear
+                  </button>
+                  <button
+                    className="px-4 py-1 rounded bg-pink-600 text-white text-xs hover:bg-pink-700"
+                    onClick={() => setShowTagFilter(false)}
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
           {/* Hamburger/Vertical Dots Menu */}
           <div className="relative">
@@ -689,9 +816,12 @@ const App = () => {
           </div>
         </header>
       )}
+      {/* NSFW toggle for public characters page */}
+      {/* Removed duplicate NSFW toggle block above <main> to prevent shadowing */}
 
       {/* Main Content & Routes */}
       <main className={`flex-1 w-full ${window.location.pathname.startsWith('/chat/') ? 'flex justify-center items-center bg-gradient-to-br from-[#1a1333] via-[#2d1e4f] to-[#0f051d] p-0' : 'container mx-auto px-4 py-8'}`}>
+        {/* NSFW toggle removed from home page as all characters are now shown */}
         <Routes>
           <Route
             path="/"
@@ -713,6 +843,7 @@ const App = () => {
                 handleInputChange={handleInputChange}
                 handleImageChange={handleImageChange}
                 handleSubmit={handleSubmit}
+                tagOptions={TAG_OPTIONS}
               />
             }
           />
@@ -757,7 +888,8 @@ const App = () => {
             element={
               <SearchResults
                 results={filteredCharacters}
-                onSelectCharacter={openChatWithCharacter}
+                setActiveCharacter={(character) => openChatWithCharacter(character.id)}
+                openCharacterProfile={openCharacterProfile}
               />
             }
           />
@@ -1221,6 +1353,13 @@ const App = () => {
             <div className="text-center">
               <h2 className="text-2xl font-bold mb-2">{profileCharacter.name}</h2>
               <p className="text-white/80 mb-2">{profileCharacter.description}</p>
+              {profileCharacter.tags && profileCharacter.tags.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-2 mb-2">
+                  {profileCharacter.tags.map(tag => (
+                    <span key={tag} className="bg-pink-700/80 text-white text-xs px-3 py-1 rounded-full font-semibold shadow">{tag}</span>
+                  ))}
+                </div>
+              )}
               {profileCharacter.backstory && (
                 <p className="text-sm text-white/60 mb-2"><span className="font-semibold">Backstory:</span> {profileCharacter.backstory}</p>
               )}
