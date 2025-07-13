@@ -564,7 +564,8 @@ ${character.name}: **I pause, gathering my thoughts.** _So much has happened alr
       tokenCount += messageLength;
     }
   }
-  messagesArr.push({ role: "user", content: message });
+  // Use effectiveMessage for regeneration, otherwise use message
+  messagesArr.push({ role: "user", content: effectiveMessage });
 
   try {
 

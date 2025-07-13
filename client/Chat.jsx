@@ -103,7 +103,7 @@ const Chat = ({
       setInputMessage(messages[userMsgIndex].text);
       // Use a synthetic event for form submission
       const fakeEvent = { preventDefault: () => {} };
-      handleSendMessage(fakeEvent, activeCharacter?.id);
+      handleSendMessage(activeCharacter?.id, fakeEvent, { regenerate: true });
       setInputMessage("");
     }
     setEditingIndex(null);
