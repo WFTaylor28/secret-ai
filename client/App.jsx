@@ -64,7 +64,10 @@ const App = () => {
     "Straight",
     "Gay",
     "Bisexual",
-    "Furry"
+    "Furry",
+    "Ninja",
+    "Video Game",
+    "AI"
   ];
   const [selectedTags, setSelectedTags] = useState([]);
   const [editCharacter, setEditCharacter] = useState(null); // character object or null

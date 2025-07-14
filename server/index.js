@@ -732,18 +732,50 @@ ${character.name}: **I pause, gathering my thoughts.** _So much has happened alr
       temperature: 0.9,
     });
 
-    // 3. Post-process AI response for formatting (grammar/spell check placeholder)
-    function formatResponse(response) {
+    // 3. Post-process AI response for formatting and anti-repetition
+    function formatResponse(response, historyArr = []) {
       // Ensure actions are wrapped in asterisks
       response = response.replace(/\*\s*(.*?)\s*\*/g, '*$1*');
       // Ensure thoughts are wrapped in underscores
       response = response.replace(/_\s*(.*?)\s*_/g, '_$1_');
       // Ensure dialogue is wrapped in quotes (if not already)
       response = response.replace(/(?<!")([A-Za-z0-9 ,.!?\-]+)(?=\n|$)/g, '"$1"');
+
+      // --- Strong Anti-Repetition Logic ---
+      // 1. Remove repeated sentences within the same reply
+      const sentences = response.split(/(?<=[.!?])\s+/);
+      const seen = new Set();
+      const uniqueSentences = sentences.filter(s => {
+        const norm = s.trim().toLowerCase();
+        if (seen.has(norm) || norm.length < 2) return false;
+        seen.add(norm);
+        return true;
+      });
+      let cleaned = uniqueSentences.join(' ');
+
+      // 2. Remove sentences that are nearly identical to recent AI messages in history
+      if (Array.isArray(historyArr) && historyArr.length > 0) {
+        const recentAIMessages = historyArr.filter(m => !m.isUser).map(m => m.text.toLowerCase());
+        cleaned = cleaned.split(/(?<=[.!?])\s+/).filter(s => {
+          const norm = s.trim().toLowerCase();
+          // Remove if this sentence is a substring of any recent AI message (stronger filter)
+          return !recentAIMessages.some(msg => msg.includes(norm) && norm.length > 6);
+        }).join(' ');
+      }
+
+      // 3. Remove repeated phrases (3+ words) within the reply
+      const phraseSeen = new Set();
+      cleaned = cleaned.replace(/\b(\w+\s+\w+\s+\w+)\b/gi, (match) => {
+        const norm = match.trim().toLowerCase();
+        if (phraseSeen.has(norm)) return '';
+        phraseSeen.add(norm);
+        return match;
+      });
+
       // Placeholder for grammar/spell check: could integrate with a library or API here
-      return response;
+      return cleaned;
     }
-    const aiMessage = formatResponse(response.choices[0].message.content.trim());
+    const aiMessage = formatResponse(response.choices[0].message.content.trim(), Array.isArray(history) ? history : []);
     // Debug: Log the raw OpenAI response
     console.log("RAW OPENAI RESPONSE:\n", aiMessage);
     res.json({ reply: aiMessage });
