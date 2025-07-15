@@ -114,12 +114,12 @@ const Chat = ({
   };
 
   return (
-    <section>
-      <h2 className="text-3xl font-bold mb-6">Your Chats</h2>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Character List */}
-        <div className="lg:col-span-1">
-          <h3 className="text-xl font-semibold mb-4">Characters</h3>
+    <section className="w-full max-w-3xl mx-auto px-2 sm:px-4 md:px-8 py-4 md:py-8">
+      <h2 className="text-2xl md:text-3xl font-bold mb-4 text-center md:text-left hidden md:block">Your Chats</h2>
+      <div className="flex flex-col md:flex-row gap-4">
+        {/* Character List - hidden on mobile, visible on md+ */}
+        <div className="hidden md:block md:w-1/3">
+          <h3 className="text-lg font-semibold mb-2">Characters</h3>
           <div className="space-y-2 max-h-[32rem] overflow-y-auto pr-2">
             {chatSessions.length === 0 ? (
               <div className="text-gray-400 text-center py-8">You have no chats yet.</div>
@@ -153,21 +153,29 @@ const Chat = ({
             )}
           </div>
         </div>
-        {/* Chat Interface */}
-        <div className="lg:col-span-2 bg-gray-900 rounded-xl p-4 min-h-[600px] flex flex-col">
+        {/* Chat Interface - always visible, full width on mobile */}
+        <div className="w-full max-w-3xl mx-auto bg-gray-900 rounded-xl p-2 sm:p-4 h-[600px] flex flex-col">
           {!activeCharacter ? (
             <div className="flex-1 flex items-center justify-center text-gray-500">
               Select a character to start chatting.
             </div>
           ) : (
             <>
-              <div className="flex items-center p-2 border-b border-gray-700 mb-2">
-                <img
-                  src={activeCharacter.image}
-                  alt={activeCharacter.name}
-                  className="w-10 h-10 rounded-full object-cover mr-3"
-                />
-                <h4 className="font-semibold">{activeCharacter.name}</h4>
+              {/* Chat header: avatar and name, always visible */}
+              <div className="flex flex-col">
+                {/* On mobile, render the tab buttons above avatar/name inside the chat interface only */}
+                <div className="mb-2 md:hidden">
+                  {/* TODO: Insert the real tab buttons here (e.g., <TabButtons /> or similar) */}
+                </div>
+                <div className="flex items-center p-2 border-b border-gray-700 mb-2">
+                  <img
+                    src={activeCharacter.image}
+                    alt={activeCharacter.name}
+                    className="w-10 h-10 rounded-full object-cover mr-3"
+                  />
+                  <h4 className="font-semibold">{activeCharacter.name}</h4>
+                </div>
+                {/* On desktop, do not render tab buttons here */}
               </div>
               {/* Messages */}
               <div

@@ -643,6 +643,15 @@ const App = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1a1333] via-[#2d1e4f] to-[#0f051d] text-white flex flex-col" onClick={() => { if (showAccountDropdown) setShowAccountDropdown(false); }}>
+      {/* Lower z-index for chat action/profile buttons so header overlays them */}
+      <style>{`
+        .chat-action-btn, .character-profile-btn {
+          z-index: 10 !important;
+        }
+        nav {
+          z-index: 20 !important;
+        }
+      `}</style>
       {/* Top Navigation Bar */}
       <nav className="w-full bg-gradient-to-r from-purple-900/80 to-indigo-900/80 shadow-lg z-20 sticky top-0">
         <div className="container mx-auto px-4 flex flex-col md:flex-row md:items-center md:justify-between" style={{ minHeight: '4.5rem' }}>
@@ -725,7 +734,7 @@ const App = () => {
               </form>
               {/* Tag Filter Dropdown */}
               {showTagFilter && (
-                <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-80 max-w-xs bg-gradient-to-br from-[#2d1e4f] to-[#1a1333] border border-white/10 rounded-xl shadow-2xl z-50 animate-fade-in p-4">
+                <div className="absolute left-1/2 top-full transform -translate-x-1/2 w-80 max-w-xs bg-gradient-to-br from-[#2d1e4f] to-[#1a1333] border border-white/10 rounded-xl shadow-2xl z-50 animate-fade-in p-4">
                   <div className="flex flex-wrap gap-2 mb-2">
                     {TAG_OPTIONS.map(tag => (
                       <label key={tag} className={`flex items-center px-2 py-1 rounded-full cursor-pointer text-xs font-medium transition-all ${selectedTags.includes(tag) ? 'bg-pink-600 text-white' : 'bg-white/10 text-white/80 hover:bg-pink-700/30'}`}>
@@ -834,7 +843,7 @@ const App = () => {
             </form>
             {/* Tag Filter Dropdown */}
             {showTagFilter && (
-              <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-80 max-w-xs bg-gradient-to-br from-[#2d1e4f] to-[#1a1333] border border-white/10 rounded-xl shadow-2xl z-50 animate-fade-in p-4">
+              <div className="absolute left-1/2 top-full transform -translate-x-1/2 w-80 max-w-xs bg-gradient-to-br from-[#2d1e4f] to-[#1a1333] border border-white/10 rounded-xl shadow-2xl z-50 animate-fade-in p-4">
                 <div className="flex flex-wrap gap-2 mb-2">
                   {TAG_OPTIONS.map(tag => (
                     <label key={tag} className={`flex items-center px-2 py-1 rounded-full cursor-pointer text-xs font-medium transition-all ${selectedTags.includes(tag) ? 'bg-pink-600 text-white' : 'bg-white/10 text-white/80 hover:bg-pink-700/30'}`}>
@@ -1491,7 +1500,25 @@ const App = () => {
           </div>
         </Modal>
       )}
-    </div>
+    {/* Footer */}
+    <footer className="w-full bg-gradient-to-r from-purple-900/80 to-indigo-900/80 text-white/80 text-center py-4 mt-auto border-t border-white/10">
+      <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-2">
+        <div className="flex flex-col md:flex-row items-center gap-2 md:gap-6">
+          <span className="text-sm">&copy; {new Date().getFullYear()} Lurelia AI. All rights reserved.</span>
+          <nav className="flex gap-4 text-sm">
+            <button className="hover:underline" onClick={() => setShowTerms(true)}>Terms</button>
+            <button className="hover:underline" onClick={() => setShowBlockedContent(true)}>Blocked Content</button>
+            <button className="hover:underline" onClick={() => setShowPrivacy(true)}>Privacy</button>
+            <button className="hover:underline" onClick={() => setShowFAQ(true)}>FAQ</button>
+          </nav>
+        </div>
+        <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 text-xs md:text-sm text-white/60">
+          <span>Made with <span className="text-pink-400">♥</span> by the Lurelia AI Team</span>
+          <span>Last updated: July 9, 2025</span>
+        </div>
+      </div>
+    </footer>
+  </div>
   );
 }
 
