@@ -88,6 +88,7 @@ const App = () => {
   const [showBilling, setShowBilling] = useState(false);
   const [showMenu, setShowMenu] = useState(false); // Used for mobile drawer
   const [showFAQ, setShowFAQ] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   // User stateful for character deletion
   const [user, setUser] = useState({
     id: 1,
@@ -1510,6 +1511,7 @@ const App = () => {
             <button className="hover:underline" onClick={() => setShowBlockedContent(true)}>Blocked Content</button>
             <button className="hover:underline" onClick={() => setShowPrivacy(true)}>Privacy</button>
             <button className="hover:underline" onClick={() => setShowFAQ(true)}>FAQ</button>
+            <button className="hover:underline" onClick={() => setShowAbout(true)}>About Us</button>
           </nav>
         </div>
         <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 text-xs md:text-sm text-white/60">
@@ -1518,6 +1520,20 @@ const App = () => {
         </div>
       </div>
     </footer>
+
+    {/* About Us Modal */}
+    {showAbout && (
+      <Modal onClose={() => setShowAbout(false)} title="About Us">
+        <div className="space-y-4 text-left text-white/90 max-w-lg mx-auto">
+          <p>
+            Hi! I'm the sole developer behind Lurelia AI. This site is a personal project built out of passion for creative AI and interactive storytelling. I'm incredibly grateful that you've decided to give the site a try and spend your time here.
+          </p>
+          <p>
+            Your support and feedback mean a lot. Thank you for being part of this journey!
+          </p>
+        </div>
+      </Modal>
+    )}
   </div>
   );
 }
