@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import MobileNavDrawer from "./MobileNavDrawer";
 import { Routes, Route, useNavigate, useParams } from "react-router-dom";
 import Home from "./Home";
 import CreateCharacter from "./CreateCharacter";
@@ -16,6 +17,8 @@ const glass = "backdrop-blur-md bg-white/10 border border-white/20 shadow-xl";
 const fadeIn = "transition-all duration-500 ease-in-out";
 
 const App = () => {
+  // Desktop account dropdown state
+  const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   // Tag filter dropdown state
   const [showTagFilter, setShowTagFilter] = useState(false);
   // NSFW toggle state (separate for home and search)
@@ -83,8 +86,8 @@ const App = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showBilling, setShowBilling] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
-  const [showFAQ, setShowFAQ] = useState(false); // <-- Move this here with other modal states
+  const [showMenu, setShowMenu] = useState(false); // Used for mobile drawer
+  const [showFAQ, setShowFAQ] = useState(false);
   // User stateful for character deletion
   const [user, setUser] = useState({
     id: 1,
@@ -639,44 +642,174 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1a1333] via-[#2d1e4f] to-[#0f051d] text-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-[#1a1333] via-[#2d1e4f] to-[#0f051d] text-white flex flex-col" onClick={() => { if (showAccountDropdown) setShowAccountDropdown(false); }}>
       {/* Top Navigation Bar */}
       <nav className="w-full bg-gradient-to-r from-purple-900/80 to-indigo-900/80 shadow-lg z-20 sticky top-0">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 md:gap-6">
-            {/* Logo and Brand */}
-            <div className="flex items-center">
+        <div className="container mx-auto px-4 flex flex-col md:flex-row md:items-center md:justify-between" style={{ minHeight: '4.5rem' }}>
+          {/* Mobile Header Row: Hamburger + Logo */}
+          <div className="flex items-center justify-between w-full md:hidden pt-2 pb-1">
+            {/* Hamburger Button (mobile only) */}
+            <button
+              className="flex items-center justify-center w-12 h-12 rounded-full hover:bg-purple-800/40 focus:outline-none focus:ring-2 focus:ring-purple-400 md:hidden"
+              onClick={() => setShowMenu(true)}
+              aria-label="Open navigation menu"
+            >
+              <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <line x1="4" y1="7" x2="20" y2="7" />
+                <line x1="4" y1="12" x2="20" y2="12" />
+                <line x1="4" y1="17" x2="20" y2="17" />
+              </svg>
+            </button>
+            {/* Logo */}
+            <span className="text-3xl font-extrabold bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent drop-shadow-lg cursor-pointer select-none" onClick={goHome}>
+              Lurelia AI
+            </span>
+            {/* Spacer for alignment */}
+            <span className="w-12 h-12" />
+          </div>
+          {/* Desktop Nav Row: Logo + Nav Buttons + Search + Account (md+) */}
+          <div className="hidden md:flex items-center w-full justify-between">
+            {/* Left: Logo + Nav */}
+            <div className="flex items-center gap-6">
               <span className="text-2xl font-extrabold bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent drop-shadow-lg cursor-pointer select-none" onClick={goHome}>
                 Lurelia AI
               </span>
+              <button
+                onClick={goHome}
+                className={`text-base font-medium px-4 py-2 rounded-full transition-all ${window.location.pathname === "/" ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg" : "text-purple-200 hover:bg-purple-800/30"}`}
+              >
+                Home
+              </button>
+              <button
+                onClick={() => navigate("/my-characters")}
+                className={`text-base font-medium px-4 py-2 rounded-full transition-all ${window.location.pathname === "/my-characters" ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg" : "text-purple-200 hover:bg-purple-800/30"}`}
+              >
+                My Characters
+              </button>
+              <button
+                onClick={goMyChats}
+                className={`text-base font-medium px-4 py-2 rounded-full transition-all ${window.location.pathname === "/my-chats" ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg" : "text-purple-200 hover:bg-purple-800/30"}`}
+              >
+                My Chats
+              </button>
+              <button
+                onClick={goCreate}
+                className={`text-base font-medium px-4 py-2 rounded-full transition-all ${window.location.pathname === "/create" ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg" : "text-purple-200 hover:bg-purple-800/30"}`}
+              >
+                Create Character
+              </button>
             </div>
-            <button
-              onClick={goHome}
-              className={`hidden md:inline text-base font-medium px-4 py-2 rounded-full transition-all ${window.location.pathname === "/" ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg" : "text-purple-200 hover:bg-purple-800/30"}`}
-            >
-              Home
-            </button>
-            <button
-              onClick={() => navigate("/my-characters")}
-              className={`hidden md:inline text-base font-medium px-4 py-2 rounded-full transition-all ${window.location.pathname === "/my-characters" ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg" : "text-purple-200 hover:bg-purple-800/30"}`}
-            >
-              My Characters
-            </button>
-            <button
-              onClick={goMyChats}
-              className={`hidden md:inline text-base font-medium px-4 py-2 rounded-full transition-all ${window.location.pathname === "/my-chats" ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg" : "text-purple-200 hover:bg-purple-800/30"}`}
-            >
-              My Chats
-            </button>
-            <button
-              onClick={goCreate}
-              className={`hidden md:inline text-base font-medium px-4 py-2 rounded-full transition-all ${window.location.pathname === "/create" ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg" : "text-purple-200 hover:bg-purple-800/30"}`}
-            >
-              Create Character
-            </button>
+            {/* Center: Search Bar + Filter Button (unchanged) */}
+            <div className="flex items-center ml-8 relative">
+              <form onSubmit={handleSearchSubmit} className="w-full max-w-xs flex items-center">
+                <input
+                  type="text"
+                  placeholder="Search characters..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full px-4 py-2 rounded-full bg-white/20 text-white placeholder-white/60 border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-400 transition-all"
+                  style={{minWidth: 180}}
+                />
+                <button
+                  type="button"
+                  className="ml-2 px-3 py-2 rounded-full bg-pink-600 text-white font-semibold shadow hover:bg-pink-700 transition-all flex items-center"
+                  onClick={() => setShowTagFilter((prev) => !prev)}
+                  aria-label="Filter by tags"
+                >
+                  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="mr-1"><path d="M4 6h16M6 12h12M8 18h8"/></svg>
+                  Filter
+                  {selectedTags.length > 0 && (
+                    <span className="ml-2 bg-white/20 text-xs px-2 py-1 rounded-full">{selectedTags.length}</span>
+                  )}
+                </button>
+              </form>
+              {/* Tag Filter Dropdown */}
+              {showTagFilter && (
+                <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-80 max-w-xs bg-gradient-to-br from-[#2d1e4f] to-[#1a1333] border border-white/10 rounded-xl shadow-2xl z-50 animate-fade-in p-4">
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {TAG_OPTIONS.map(tag => (
+                      <label key={tag} className={`flex items-center px-2 py-1 rounded-full cursor-pointer text-xs font-medium transition-all ${selectedTags.includes(tag) ? 'bg-pink-600 text-white' : 'bg-white/10 text-white/80 hover:bg-pink-700/30'}`}>
+                        <input
+                          type="checkbox"
+                          checked={selectedTags.includes(tag)}
+                          onChange={e => {
+                            setSelectedTags(prev =>
+                              e.target.checked
+                                ? [...prev, tag]
+                                : prev.filter(t => t !== tag)
+                            );
+                          }}
+                          className="mr-1 accent-pink-500"
+                        />
+                        {tag}
+                      </label>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <label className="flex items-center gap-2 text-xs font-medium">
+                      <input
+                        type="checkbox"
+                        checked={showNSFWSearch}
+                        onChange={e => setShowNSFWSearch(e.target.checked)}
+                        className="accent-red-500"
+                      />
+                      Show NSFW Characters
+                    </label>
+                  </div>
+                  <div className="flex justify-end gap-2 mt-2">
+                    <button
+                      className="px-4 py-1 rounded bg-gray-700 text-white text-xs hover:bg-gray-800"
+                      onClick={() => setSelectedTags([])}
+                    >
+                      Clear
+                    </button>
+                    <button
+                      className="px-4 py-1 rounded bg-pink-600 text-white text-xs hover:bg-pink-700"
+                      onClick={() => setShowTagFilter(false)}
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* Right: Account Button + Dropdown */}
+            <div className="relative ml-8">
+              <button
+                className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white font-medium transition-all backdrop-blur-lg shadow"
+                onClick={e => { e.stopPropagation(); setShowAccountDropdown(prev => !prev); }}
+                aria-haspopup="true"
+                aria-expanded={showAccountDropdown}
+              >
+                Account
+                <svg className="inline-block ml-2 w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              {showAccountDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-gradient-to-br from-[#2d1e4f] to-[#1a1333] border border-white/10 rounded-xl shadow-2xl z-50 animate-fade-in py-2 backdrop-blur-lg">
+                  <button
+                    className="w-full text-left px-4 py-2 hover:bg-white/10 transition-colors text-white"
+                    onClick={() => { setShowProfile(true); setShowAccountDropdown(false); }}
+                  >
+                    Profile
+                  </button>
+                  <button
+                    className="w-full text-left px-4 py-2 hover:bg-white/10 transition-colors text-white"
+                    onClick={() => { setShowBilling(true); setShowAccountDropdown(false); }}
+                  >
+                    Billing
+                  </button>
+                  <button
+                    className="w-full text-left px-4 py-2 hover:bg-white/10 transition-colors text-white"
+                    onClick={() => { setShowSettings(true); setShowAccountDropdown(false); }}
+                  >
+                    Settings
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-          {/* Search Bar with Filter Button */}
-          <div className="flex-1 flex justify-center mx-4 relative">
+          {/* Mobile Search Bar and Filter Button (unchanged) */}
+          <div className="w-full flex justify-center mx-0 md:mx-4 mt-2 md:mt-0 relative md:hidden">
             <form onSubmit={handleSearchSubmit} className="w-full max-w-xs flex items-center">
               <input
                 type="text"
@@ -749,34 +882,19 @@ const App = () => {
               </div>
             )}
           </div>
-          {/* Hamburger/Vertical Dots Menu */}
-          <div className="relative">
-            <button
-              className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-purple-800/40 focus:outline-none focus:ring-2 focus:ring-purple-400"
-              onClick={() => setShowMenu((prev) => !prev)}
-              aria-label="Open account menu"
-            >
-              <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <circle cx="12" cy="5" r="1.5" />
-                <circle cx="12" cy="12" r="1.5" />
-                <circle cx="12" cy="19" r="1.5" />
-              </svg>
-            </button>
-            {showMenu && (
-              <div className="absolute right-0 mt-2 w-56 rounded-xl shadow-2xl bg-gradient-to-br from-[#2d1e4f] to-[#1a1333] border border-white/10 z-50 animate-fade-in">
-                <div className="py-2">
-                  <div className="px-5 py-2 text-sm text-white/80 font-semibold border-b border-white/10">Account</div>
-                  <button className="w-full text-left px-5 py-2 hover:bg-purple-800/30 transition-colors text-white/90" onClick={() => { setShowProfile(true); setShowMenu(false); }}>Profile</button>
-                  <button className="w-full text-left px-5 py-2 hover:bg-purple-800/30 transition-colors text-white/90" onClick={() => { setShowSettings(true); setShowMenu(false); }}>Settings</button>
-                  <button className="w-full text-left px-5 py-2 hover:bg-purple-800/30 transition-colors text-white/90" onClick={() => { setShowBilling(true); setShowMenu(false); }}>Billing</button>
-                  <div className="border-t border-white/10 my-2" />
-                  <button className="w-full text-left px-5 py-2 hover:bg-pink-700/40 transition-colors text-pink-300 font-semibold">Logout</button>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </nav>
+        {/* MobileNavDrawer: Hamburger Drawer for mobile nav/account */}
+        <MobileNavDrawer open={showMenu} onClose={() => setShowMenu(false)}>
+          <button className="w-full text-left px-4 py-3 rounded-lg text-lg font-semibold text-white/90 hover:bg-purple-800/30 transition-colors" onClick={() => { goHome(); setShowMenu(false); }}>Home</button>
+          <button className="w-full text-left px-4 py-3 rounded-lg text-lg font-semibold text-white/90 hover:bg-purple-800/30 transition-colors" onClick={() => { navigate("/my-characters"); setShowMenu(false); }}>My Characters</button>
+          <button className="w-full text-left px-4 py-3 rounded-lg text-lg font-semibold text-white/90 hover:bg-purple-800/30 transition-colors" onClick={() => { goMyChats(); setShowMenu(false); }}>My Chats</button>
+          <button className="w-full text-left px-4 py-3 rounded-lg text-lg font-semibold text-white/90 hover:bg-purple-800/30 transition-colors" onClick={() => { goCreate(); setShowMenu(false); }}>Create Character</button>
+          <div className="border-t border-white/10 my-2" />
+          <button className="w-full text-left px-4 py-3 rounded-lg text-white/90 hover:bg-purple-800/30 transition-colors" onClick={() => { setShowProfile(true); setShowMenu(false); }}>Profile</button>
+          <button className="w-full text-left px-4 py-3 rounded-lg text-white/90 hover:bg-purple-800/30 transition-colors" onClick={() => { setShowSettings(true); setShowMenu(false); }}>Settings</button>
+          <button className="w-full text-left px-4 py-3 rounded-lg text-white/90 hover:bg-purple-800/30 transition-colors" onClick={() => { setShowBilling(true); setShowMenu(false); }}>Billing</button>
+        </MobileNavDrawer>
 
       {/* Hero Header (Home only) */}
       {window.location.pathname === "/" && (
@@ -947,27 +1065,7 @@ const App = () => {
           </div>
         </Modal>
       )}
-      {/* --- Global Footer --- */}
-      <footer className="w-full bg-gradient-to-r from-purple-900/80 to-indigo-900/80 py-8 mt-12 shadow-inner animate-fade-in border-t border-white/10">
-        <div className="container mx-auto px-4 text-center text-white/80 text-base flex flex-col md:flex-row md:justify-between md:items-center gap-6">
-          {/* Left: Brand & Copyright */}
-          <div className="flex flex-col items-center md:items-start gap-2">
-            <span className="text-xs text-white/60">&copy; 2025 Lurelia AI. All rights reserved.</span>
-          </div>
-          {/* Center: Navigation Links */}
-          <div className="flex flex-wrap justify-center items-center gap-4 md:gap-8">
-            <button className="hover:text-pink-400 transition-colors font-medium" onClick={() => setShowTerms(true)}>Terms</button>
-            <button className="hover:text-pink-400 transition-colors font-medium" onClick={() => setShowBlockedContent(true)}>Blocked Content</button>
-            <button className="hover:text-pink-400 transition-colors font-medium" onClick={() => setShowPrivacy(true)}>Privacy</button>
-            <button className="hover:text-pink-400 transition-colors font-medium" onClick={() => setShowFAQ(true)}>FAQ</button>
-          </div>
-          {/* Right: Quick Info */}
-          <div className="flex flex-col items-center md:items-end gap-2 text-xs text-white/60">
-            <span>Made with <span className="text-pink-400">♥</span> by the Lurelia AI Team</span>
-            <span>Last updated: July 9, 2025</span>
-          </div>
-        </div>
-      </footer>
+      {/* ...existing code... */}
 
       {/* Blocked Content Modal */}
       {showBlockedContent && (
@@ -1347,43 +1445,48 @@ const App = () => {
       {/* Character Profile Modal */}
       {showCharacterProfile && profileCharacter && (
         <Modal onClose={() => setShowCharacterProfile(false)} title={profileCharacter.name}>
-          <div className="flex flex-col items-center gap-4 p-4">
-            <img
-              src={profileCharacter.image}
-              alt={profileCharacter.name}
-              className="w-48 h-64 object-cover rounded-2xl border border-white/20 shadow-lg mb-2"
-            />
-            <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2">{profileCharacter.name}</h2>
-              <p className="text-white/80 mb-2">{profileCharacter.description}</p>
-              {profileCharacter.tags && profileCharacter.tags.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-2 mb-2">
-                  {profileCharacter.tags.map(tag => (
-                    <span key={tag} className="bg-pink-700/80 text-white text-xs px-3 py-1 rounded-full font-semibold shadow">{tag}</span>
-                  ))}
-                </div>
-              )}
-              {profileCharacter.backstory && (
-                <p className="text-sm text-white/60 mb-2"><span className="font-semibold">Backstory:</span> {profileCharacter.backstory}</p>
-              )}
-              {profileCharacter.personality && (
-                <p className="text-sm text-white/60 mb-2"><span className="font-semibold">Personality:</span> {profileCharacter.personality}</p>
-              )}
-              {profileCharacter.motivations && (
-                <p className="text-sm text-white/60 mb-2"><span className="font-semibold">Motivations:</span> {profileCharacter.motivations}</p>
-              )}
-              {profileCharacter.values && (
-                <p className="text-sm text-white/60 mb-2"><span className="font-semibold">Values:</span> {profileCharacter.values}</p>
-              )}
-              {profileCharacter.accent && (
-                <p className="text-sm text-white/60 mb-2"><span className="font-semibold">Accent:</span> {profileCharacter.accent}</p>
-              )}
-              {profileCharacter.scenario && (
-                <p className="text-sm text-white/60 mb-2"><span className="font-semibold">Scenario:</span> {profileCharacter.scenario}</p>
-              )}
-              {profileCharacter.nsfw && (
-                <span className="inline-block bg-red-600 text-xs font-bold px-2 py-1 rounded-full mt-2">NSFW</span>
-              )}
+          <div className="mt-[4.5rem] md:mt-[4.5rem]">
+            <div
+              className="flex flex-col items-center gap-4 px-2 py-4 w-full max-w-xs md:max-w-xl mx-auto md:w-auto bg-gradient-to-br from-[#2d1e4f] to-[#1a1333] rounded-xl shadow-2xl"
+              style={{ maxWidth: '90vw', maxHeight: '70vh', overflowY: 'auto' }}
+            >
+              <img
+                src={profileCharacter.image}
+                alt={profileCharacter.name}
+                className="w-24 h-32 md:w-48 md:h-64 object-cover rounded-2xl border border-white/20 shadow-lg mb-2"
+              />
+              <div className="text-center">
+                <h2 className="text-xl md:text-2xl font-bold mb-2">{profileCharacter.name}</h2>
+                <p className="text-white/80 mb-2">{profileCharacter.description}</p>
+                {profileCharacter.tags && profileCharacter.tags.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-2 mb-2">
+                    {profileCharacter.tags.map(tag => (
+                      <span key={tag} className="bg-pink-700/80 text-white text-xs px-3 py-1 rounded-full font-semibold shadow">{tag}</span>
+                    ))}
+                  </div>
+                )}
+                {profileCharacter.backstory && (
+                  <p className="text-sm text-white/60 mb-2"><span className="font-semibold">Backstory:</span> {profileCharacter.backstory}</p>
+                )}
+                {profileCharacter.personality && (
+                  <p className="text-sm text-white/60 mb-2"><span className="font-semibold">Personality:</span> {profileCharacter.personality}</p>
+                )}
+                {profileCharacter.motivations && (
+                  <p className="text-sm text-white/60 mb-2"><span className="font-semibold">Motivations:</span> {profileCharacter.motivations}</p>
+                )}
+                {profileCharacter.values && (
+                  <p className="text-sm text-white/60 mb-2"><span className="font-semibold">Values:</span> {profileCharacter.values}</p>
+                )}
+                {profileCharacter.accent && (
+                  <p className="text-sm text-white/60 mb-2"><span className="font-semibold">Accent:</span> {profileCharacter.accent}</p>
+                )}
+                {profileCharacter.scenario && (
+                  <p className="text-sm text-white/60 mb-2"><span className="font-semibold">Scenario:</span> {profileCharacter.scenario}</p>
+                )}
+                {profileCharacter.nsfw && (
+                  <span className="inline-block bg-red-600 text-xs font-bold px-2 py-1 rounded-full mt-2">NSFW</span>
+                )}
+              </div>
             </div>
           </div>
         </Modal>
