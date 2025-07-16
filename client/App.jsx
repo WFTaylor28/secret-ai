@@ -145,7 +145,7 @@ const App = () => {
   // --- Auth Modal State ---
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authStep, setAuthStep] = useState('choose'); // 'choose', 'login', 'register'
-  const [authForm, setAuthForm] = useState({ username: '', password: '', confirmPassword: '' });
+  const [authForm, setAuthForm] = useState({ username: '', email: '', password: '', confirmPassword: '' });
   const [authError, setAuthError] = useState('');
   const [authSuccess, setAuthSuccess] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false); // Replace with real auth later
@@ -826,11 +826,12 @@ const App = () => {
               try {
                 const res = await axios.post("/register", {
                   username: authForm.username,
+                  email: authForm.email,
                   password: authForm.password,
                 });
                 setAuthSuccess("Account created! You can now log in.");
                 setAuthError("");
-                setAuthForm({ username: '', password: '', confirmPassword: '' });
+                setAuthForm({ username: '', email: '', password: '', confirmPassword: '' });
               } catch (err) {
                 if (err.response && err.response.data && err.response.data.error) {
                   setAuthError(err.response.data.error);
@@ -843,6 +844,7 @@ const App = () => {
               }
             }}>
               <input type="text" className="w-full px-4 py-2 rounded bg-gray-800 text-white" placeholder="Username" value={authForm.username} onChange={e => setAuthForm(f => ({ ...f, username: e.target.value }))} required />
+              <input type="email" className="w-full px-4 py-2 rounded bg-gray-800 text-white" placeholder="Email" value={authForm.email} onChange={e => setAuthForm(f => ({ ...f, email: e.target.value }))} required />
               <input type="password" className="w-full px-4 py-2 rounded bg-gray-800 text-white" placeholder="Password" value={authForm.password} onChange={e => setAuthForm(f => ({ ...f, password: e.target.value }))} required />
               <input type="password" className="w-full px-4 py-2 rounded bg-gray-800 text-white" placeholder="Confirm Password" value={authForm.confirmPassword} onChange={e => setAuthForm(f => ({ ...f, confirmPassword: e.target.value }))} required />
               {authError && <div className="text-red-400 text-xs">{authError}</div>}
@@ -855,6 +857,7 @@ const App = () => {
           {authStep === 'login' && (
             <form className="space-y-4" onSubmit={e => { e.preventDefault(); /* Validate and handle login */ }}>
               <input type="text" className="w-full px-4 py-2 rounded bg-gray-800 text-white" placeholder="Username" value={authForm.username} onChange={e => setAuthForm(f => ({ ...f, username: e.target.value }))} required />
+              <input type="email" className="w-full px-4 py-2 rounded bg-gray-800 text-white" placeholder="Email" value={authForm.email} onChange={e => setAuthForm(f => ({ ...f, email: e.target.value }))} required />
               <input type="password" className="w-full px-4 py-2 rounded bg-gray-800 text-white" placeholder="Password" value={authForm.password} onChange={e => setAuthForm(f => ({ ...f, password: e.target.value }))} required />
               {authError && <div className="text-red-400 text-xs">{authError}</div>}
               <button type="submit" className="w-full mt-4 px-6 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 font-medium transition-all">Log In</button>
