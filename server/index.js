@@ -171,6 +171,36 @@ app.post('/deepgen', async (req, res) => {
 // OpenAI Setup
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// GET /my-chats endpoint: returns all chats and messages for the logged-in user
+app.get("/my-chats", async (req, res) => {
+  const userId = req.query.userId || req.headers["x-user-id"];
+  if (!userId) {
+    return res.status(401).json({ error: "Missing userId. You must be logged in." });
+  }
+  try {
+    // Get all chats for this user, including character and messages
+    const chats = await prisma.chat.findMany({
+      where: { userId: Number(userId) },
+      include: {
+        character: true,
+        messages: { orderBy: { createdAt: "asc" } },
+      },
+      orderBy: { updatedAt: "desc" },
+    });
+    // Format for frontend: [{ character, messages, lastActive, ... }]
+    const result = chats.map(chat => ({
+      character: chat.character,
+      messages: chat.messages.map(m => ({ text: m.text, isUser: m.sender === 'user', createdAt: m.createdAt })),
+      lastActive: chat.updatedAt,
+      chatId: chat.id,
+    }));
+    res.json({ chats: result });
+  } catch (err) {
+    console.error("Error fetching user chats:", err);
+    res.status(500).json({ error: "Failed to fetch chats", details: err.message });
+  }
+});
+
 // POST /chat endpoint
 app.post("/chat", async (req, res) => {
   // --- Expanded Emotional Intelligence: Track Conversation Emotion History & Personality-aware Empathy ---
