@@ -9,17 +9,26 @@ const app = express();
 
 // Registration endpoint
 app.post('/register', async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
+  const { username, email, password } = req.body;
+  if (!username || !email || !password) {
     return res.status(400).json({ error: 'All fields are required.' });
   }
   try {
-    // Check if username already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { username }
+    // Check if username or email already exists
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { username },
+          { email }
+        ]
+      }
     });
     if (existingUser) {
-      return res.status(409).json({ error: 'Username already taken.' });
+      if (existingUser.username === username) {
+        return res.status(409).json({ error: 'Username already taken.' });
+      } else {
+        return res.status(409).json({ error: 'Email already registered.' });
+      }
     }
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
@@ -27,10 +36,11 @@ app.post('/register', async (req, res) => {
     const user = await prisma.user.create({
       data: {
         username,
+        email,
         passwordHash
       }
     });
-    res.status(201).json({ id: user.id, username: user.username });
+    res.status(201).json({ id: user.id, username: user.username, email: user.email });
   } catch (err) {
     res.status(500).json({ error: 'Registration failed.' });
   }
