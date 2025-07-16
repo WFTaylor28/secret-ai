@@ -1,6 +1,7 @@
 import axios from 'axios';
 
+// Use the Render backend for all API requests
 export default axios.create({
-  baseURL: '/', // Adjust if backend is on a different port
+  baseURL: 'https://secret-ai-uz8m.onrender.com',
   withCredentials: false,
 });
