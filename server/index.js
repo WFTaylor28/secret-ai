@@ -42,7 +42,8 @@ app.post('/register', async (req, res) => {
     });
     res.status(201).json({ id: user.id, username: user.username, email: user.email });
   } catch (err) {
-    res.status(500).json({ error: 'Registration failed.' });
+    console.error('Registration error:', err);
+    res.status(500).json({ error: 'Registration failed.', details: err.message, code: err.code });
   }
 });
 // ...existing code...
