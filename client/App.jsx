@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import axios from "./axios";
 import MobileNavDrawer from "./MobileNavDrawer";
 import { Routes, Route, useNavigate, useParams } from "react-router-dom";
 import Home from "./Home";
@@ -141,6 +142,14 @@ const App = () => {
       },
     ],
   });
+  // --- Auth Modal State ---
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authStep, setAuthStep] = useState('choose'); // 'choose', 'login', 'register'
+  const [authForm, setAuthForm] = useState({ username: '', password: '', confirmPassword: '' });
+  const [authError, setAuthError] = useState('');
+  const [authSuccess, setAuthSuccess] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // Replace with real auth later
+  const [authLoading, setAuthLoading] = useState(false);
 
   // Character creation form state (move this up)
   const [newCharacter, setNewCharacter] = useState({
@@ -787,36 +796,72 @@ const App = () => {
             <div className="relative ml-8">
               <button
                 className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white font-medium transition-all backdrop-blur-lg shadow"
-                onClick={e => { e.stopPropagation(); setShowAccountDropdown(prev => !prev); }}
+                onClick={e => { e.stopPropagation(); setShowAuthModal(true); setAuthStep('choose'); }}
                 aria-haspopup="true"
-                aria-expanded={showAccountDropdown}
+                aria-expanded={showAuthModal}
               >
-                Account
+                {isLoggedIn ? 'Account' : 'Sign Up/Login'}
                 <svg className="inline-block ml-2 w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
               </button>
-              {showAccountDropdown && (
-                <div className="absolute right-0 mt-2 w-48 bg-gradient-to-br from-[#2d1e4f] to-[#1a1333] border border-white/10 rounded-xl shadow-2xl z-50 animate-fade-in py-2 backdrop-blur-lg">
-                  <button
-                    className="w-full text-left px-4 py-2 hover:bg-white/10 transition-colors text-white"
-                    onClick={() => { setShowProfile(true); setShowAccountDropdown(false); }}
-                  >
-                    Profile
-                  </button>
-                  <button
-                    className="w-full text-left px-4 py-2 hover:bg-white/10 transition-colors text-white"
-                    onClick={() => { setShowBilling(true); setShowAccountDropdown(false); }}
-                  >
-                    Billing
-                  </button>
-                  <button
-                    className="w-full text-left px-4 py-2 hover:bg-white/10 transition-colors text-white"
-                    onClick={() => { setShowSettings(true); setShowAccountDropdown(false); }}
-                  >
-                    Settings
-                  </button>
-                </div>
-              )}
             </div>
+      {/* --- Auth Modal --- */}
+      {showAuthModal && (
+        <Modal onClose={() => { setShowAuthModal(false); setAuthStep('choose'); setAuthError(''); setAuthForm({ username: '', password: '', confirmPassword: '' }); }} title={authStep === 'choose' ? 'Sign Up / Login' : authStep === 'login' ? 'Log In' : 'Create Account'}>
+          {authStep === 'choose' && (
+            <div className="flex flex-col gap-4 items-center justify-center py-4">
+              <button className="px-6 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 font-medium transition-all w-full" onClick={() => setAuthStep('login')}>Log In</button>
+              <button className="px-6 py-2 rounded-lg bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 font-medium transition-all w-full" onClick={() => setAuthStep('register')}>Create Account</button>
+            </div>
+          )}
+          {authStep === 'register' && (
+            <form className="space-y-4" onSubmit={async e => {
+              e.preventDefault();
+              setAuthError("");
+              setAuthSuccess("");
+              if (authForm.password !== authForm.confirmPassword) {
+                setAuthError("Passwords do not match.");
+                return;
+              }
+              setAuthLoading(true);
+              try {
+                const res = await axios.post("/register", {
+                  username: authForm.username,
+                  password: authForm.password,
+                });
+                setAuthSuccess("Account created! You can now log in.");
+                setAuthError("");
+                setAuthForm({ username: '', password: '', confirmPassword: '' });
+              } catch (err) {
+                if (err.response && err.response.data && err.response.data.error) {
+                  setAuthError(err.response.data.error);
+                } else {
+                  setAuthError("Registration failed. Please try again.");
+                }
+                setAuthSuccess("");
+              } finally {
+                setAuthLoading(false);
+              }
+            }}>
+              <input type="text" className="w-full px-4 py-2 rounded bg-gray-800 text-white" placeholder="Username" value={authForm.username} onChange={e => setAuthForm(f => ({ ...f, username: e.target.value }))} required />
+              <input type="password" className="w-full px-4 py-2 rounded bg-gray-800 text-white" placeholder="Password" value={authForm.password} onChange={e => setAuthForm(f => ({ ...f, password: e.target.value }))} required />
+              <input type="password" className="w-full px-4 py-2 rounded bg-gray-800 text-white" placeholder="Confirm Password" value={authForm.confirmPassword} onChange={e => setAuthForm(f => ({ ...f, confirmPassword: e.target.value }))} required />
+              {authError && <div className="text-red-400 text-xs">{authError}</div>}
+              {authSuccess && <div className="text-green-400 text-xs">{authSuccess}</div>}
+              <button type="submit" className="w-full mt-4 px-6 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 font-medium transition-all" disabled={authLoading}>
+                {authLoading ? "Creating..." : "Create Account"}
+              </button>
+            </form>
+          )}
+          {authStep === 'login' && (
+            <form className="space-y-4" onSubmit={e => { e.preventDefault(); /* Validate and handle login */ }}>
+              <input type="text" className="w-full px-4 py-2 rounded bg-gray-800 text-white" placeholder="Username" value={authForm.username} onChange={e => setAuthForm(f => ({ ...f, username: e.target.value }))} required />
+              <input type="password" className="w-full px-4 py-2 rounded bg-gray-800 text-white" placeholder="Password" value={authForm.password} onChange={e => setAuthForm(f => ({ ...f, password: e.target.value }))} required />
+              {authError && <div className="text-red-400 text-xs">{authError}</div>}
+              <button type="submit" className="w-full mt-4 px-6 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 font-medium transition-all">Log In</button>
+            </form>
+          )}
+        </Modal>
+      )}
           </div>
           {/* Mobile Search Bar and Filter Button (unchanged) */}
           <div className="w-full flex justify-center mx-0 md:mx-4 mt-2 md:mt-0 relative md:hidden">
