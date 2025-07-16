@@ -1,6 +1,36 @@
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcrypt');
+const prisma = new PrismaClient();
+
+// Registration endpoint
+app.post('/register', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'All fields are required.' });
+  }
+  try {
+    // Check if username already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { username }
+    });
+    if (existingUser) {
+      return res.status(409).json({ error: 'Username already taken.' });
+    }
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, 10);
+    // Create user
+    const user = await prisma.user.create({
+      data: {
+        username,
+        passwordHash
+      }
+    });
+    res.status(201).json({ id: user.id, username: user.username });
+  } catch (err) {
+    res.status(500).json({ error: 'Registration failed.' });
+  }
+});
+// ...existing code...
 const path = require("path");
 const { OpenAI } = require("openai");
 
