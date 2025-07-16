@@ -796,13 +796,57 @@ const App = () => {
             <div className="relative ml-8">
               <button
                 className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white font-medium transition-all backdrop-blur-lg shadow"
-                onClick={e => { e.stopPropagation(); setShowAuthModal(true); setAuthStep('choose'); }}
+                onClick={e => {
+                  e.stopPropagation();
+                  if (isLoggedIn) {
+                    setShowAccountDropdown((prev) => !prev);
+                  } else {
+                    setShowAuthModal(true);
+                    setAuthStep('choose');
+                  }
+                }}
                 aria-haspopup="true"
-                aria-expanded={showAuthModal}
+                aria-expanded={isLoggedIn ? showAccountDropdown : showAuthModal}
               >
                 {isLoggedIn ? 'Account' : 'Sign Up/Login'}
                 <svg className="inline-block ml-2 w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
               </button>
+              {/* Account Dropdown */}
+              {isLoggedIn && showAccountDropdown && (
+                <div className="absolute right-0 mt-2 w-56 bg-gradient-to-br from-[#2d1e4f] to-[#1a1333] border border-white/10 rounded-xl shadow-2xl z-50 animate-fade-in p-4">
+                  <div className="mb-2 font-semibold truncate">{user.username || user.email}</div>
+                  <button
+                    className="w-full text-left px-4 py-2 rounded hover:bg-purple-800/30 text-white"
+                    onClick={() => {
+                      setShowProfile(true);
+                      setShowAccountDropdown(false);
+                    }}
+                  >Profile</button>
+                  <button
+                    className="w-full text-left px-4 py-2 rounded hover:bg-purple-800/30 text-white"
+                    onClick={() => {
+                      setShowSettings(true);
+                      setShowAccountDropdown(false);
+                    }}
+                  >Settings</button>
+                  <button
+                    className="w-full text-left px-4 py-2 rounded hover:bg-purple-800/30 text-white"
+                    onClick={() => {
+                      setShowBilling(true);
+                      setShowAccountDropdown(false);
+                    }}
+                  >Billing</button>
+                  <div className="border-t border-white/10 my-2" />
+                  <button
+                    className="w-full text-left px-4 py-2 rounded hover:bg-pink-700/40 text-red-300 font-semibold"
+                    onClick={() => {
+                      setIsLoggedIn(false);
+                      setUser({});
+                      setShowAccountDropdown(false);
+                    }}
+                  >Log Out</button>
+                </div>
+              )}
             </div>
       {/* --- Auth Modal --- */}
       {showAuthModal && (
