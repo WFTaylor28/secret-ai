@@ -90,8 +90,8 @@ const App = () => {
   const [showMenu, setShowMenu] = useState(false); // Used for mobile drawer
   const [showFAQ, setShowFAQ] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
-  // User stateful for character deletion
-  const [user, setUser] = useState({
+  // Demo user with public characters (used for logout reset)
+  const DEMO_USER = {
     id: 1,
     username: "User123",
     characters: [
@@ -141,7 +141,10 @@ const App = () => {
         firstMessage: '*meets your gaze with a knowing smile* "Careful who you trust in these halls. Not every secret is meant to be uncovered."',
       },
     ],
-  });
+  };
+
+  // User stateful for character deletion
+  const [user, setUser] = useState(DEMO_USER);
   // --- Auth Modal State ---
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authStep, setAuthStep] = useState('choose'); // 'choose', 'login', 'register'
@@ -841,7 +844,7 @@ const App = () => {
                     className="w-full text-left px-4 py-2 rounded hover:bg-pink-700/40 text-red-300 font-semibold"
                     onClick={() => {
                       setIsLoggedIn(false);
-                      setUser({ characters: [] });
+                      setUser(DEMO_USER);
                       setShowAccountDropdown(false);
                     }}
                   >Log Out</button>
