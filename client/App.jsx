@@ -855,12 +855,41 @@ const App = () => {
             </form>
           )}
           {authStep === 'login' && (
-            <form className="space-y-4" onSubmit={e => { e.preventDefault(); /* Validate and handle login */ }}>
-              <input type="text" className="w-full px-4 py-2 rounded bg-gray-800 text-white" placeholder="Username" value={authForm.username} onChange={e => setAuthForm(f => ({ ...f, username: e.target.value }))} required />
-              <input type="email" className="w-full px-4 py-2 rounded bg-gray-800 text-white" placeholder="Email" value={authForm.email} onChange={e => setAuthForm(f => ({ ...f, email: e.target.value }))} required />
+            <form className="space-y-4" onSubmit={async e => {
+              e.preventDefault();
+              setAuthError("");
+              setAuthSuccess("");
+              setAuthLoading(true);
+              try {
+                // Allow login with username or email (prefer username if filled)
+                const usernameOrEmail = authForm.username || authForm.email;
+                const res = await axios.post("/login", {
+                  usernameOrEmail,
+                  password: authForm.password,
+                });
+                setIsLoggedIn(true);
+                setUser(u => ({ ...u, ...res.data }));
+                setShowAuthModal(false);
+                setAuthForm({ username: '', email: '', password: '', confirmPassword: '' });
+                setAuthError("");
+                setAuthSuccess("");
+              } catch (err) {
+                if (err.response && err.response.data && err.response.data.error) {
+                  setAuthError(err.response.data.error);
+                } else {
+                  setAuthError("Login failed. Please try again.");
+                }
+                setIsLoggedIn(false);
+              } finally {
+                setAuthLoading(false);
+              }
+            }}>
+              <input type="text" className="w-full px-4 py-2 rounded bg-gray-800 text-white" placeholder="Username or Email" value={authForm.username} onChange={e => setAuthForm(f => ({ ...f, username: e.target.value }))} required />
               <input type="password" className="w-full px-4 py-2 rounded bg-gray-800 text-white" placeholder="Password" value={authForm.password} onChange={e => setAuthForm(f => ({ ...f, password: e.target.value }))} required />
               {authError && <div className="text-red-400 text-xs">{authError}</div>}
-              <button type="submit" className="w-full mt-4 px-6 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 font-medium transition-all">Log In</button>
+              <button type="submit" className="w-full mt-4 px-6 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 font-medium transition-all" disabled={authLoading}>
+                {authLoading ? "Logging in..." : "Log In"}
+              </button>
             </form>
           )}
         </Modal>
