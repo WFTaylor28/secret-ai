@@ -1,0 +1,60 @@
+// Prisma schema for secret-ai backend
+// Defines users, characters, chats, and messages
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  characters   Character[]
+  chats        Chat[]
+}
+
+model Character {
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+  name        String
+  description String
+  imageUrl    String?
+  backstory   String?
+  personality String?
+  motivations String?
+  values      String?
+  accent      String?
+  scenario    String?
+  isPublic    Boolean  @default(false)
+  nsfw        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  chats       Chat[]
+}
+
+model Chat {
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+  character   Character @relation(fields: [characterId], references: [id])
+  characterId Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  messages    Message[]
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  chat      Chat     @relation(fields: [chatId], references: [id])
+  chatId    Int
+  sender    String   // "user" or "ai"
+  text      String
+  createdAt DateTime @default(now())
+}
