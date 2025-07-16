@@ -171,6 +171,7 @@ app.post('/deepgen', async (req, res) => {
 // OpenAI Setup
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+
 // GET /my-chats endpoint: returns all chats and messages for the logged-in user
 app.get("/my-chats", async (req, res) => {
   const userId = req.query.userId || req.headers["x-user-id"];
@@ -198,6 +199,52 @@ app.get("/my-chats", async (req, res) => {
   } catch (err) {
     console.error("Error fetching user chats:", err);
     res.status(500).json({ error: "Failed to fetch chats", details: err.message });
+  }
+});
+
+// POST /characters - create a new character for the logged-in user
+app.post("/characters", async (req, res) => {
+  const userId = req.body.userId;
+  const { name, description, backstory, personality, memory, scenario, nsfw, firstMessage } = req.body;
+  if (!userId || !name || !description) {
+    return res.status(400).json({ error: "Missing required fields: userId, name, description." });
+  }
+  try {
+    const character = await prisma.character.create({
+      data: {
+        userId: Number(userId),
+        name,
+        description,
+        backstory: backstory || '',
+        personality: personality || '',
+        memory: memory || '',
+        scenario: scenario || '',
+        nsfw: !!nsfw,
+        firstMessage: firstMessage || '',
+      },
+    });
+    res.status(201).json({ character });
+  } catch (err) {
+    console.error("Error creating character:", err);
+    res.status(500).json({ error: "Failed to create character", details: err.message });
+  }
+});
+
+// GET /my-characters - get all characters created by the logged-in user
+app.get("/my-characters", async (req, res) => {
+  const userId = req.query.userId || req.headers["x-user-id"];
+  if (!userId) {
+    return res.status(401).json({ error: "Missing userId. You must be logged in." });
+  }
+  try {
+    const characters = await prisma.character.findMany({
+      where: { userId: Number(userId) },
+      orderBy: { createdAt: "desc" },
+    });
+    res.json({ characters });
+  } catch (err) {
+    console.error("Error fetching user characters:", err);
+    res.status(500).json({ error: "Failed to fetch characters", details: err.message });
   }
 });
 
