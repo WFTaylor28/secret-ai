@@ -175,9 +175,8 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 app.post("/chat", async (req, res) => {
   // --- Expanded Emotional Intelligence: Track Conversation Emotion History & Personality-aware Empathy ---
   // --- Continuous Learning & Improvement: Track User Feedback, Preferences, and Adapt AI ---
-  // Move destructure to top so character/message/history are available for all logic
-  // Destructure once at the top for all logic
-  const { message, character, history, regenerate } = req.body;
+  // Destructure request
+  const { message, character, history, regenerate, userId } = req.body;
   // Regeneration support: use last user message from history if regenerate is true
   let effectiveMessage = message;
   if (regenerate && Array.isArray(history)) {
@@ -213,6 +212,41 @@ app.post("/chat", async (req, res) => {
   if (!global.conversationEmotionHistory[convoKey]) global.conversationEmotionHistory[convoKey] = [];
   if (!global.conversationPreferences[convoKey]) global.conversationPreferences[convoKey] = {};
   if (!global.conversationFeedback[convoKey]) global.conversationFeedback[convoKey] = [];
+
+  // --- Chat persistence logic ---
+  // Only persist if userId is present (i.e., logged in)
+  let chatId = null;
+  let chatInstance = null;
+  try {
+    if (userId && character && character.id) {
+      // Find or create chat for this user/character
+      chatInstance = await prisma.chat.findFirst({
+        where: { userId: userId, characterId: character.id },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (!chatInstance) {
+        chatInstance = await prisma.chat.create({
+          data: {
+            user: { connect: { id: userId } },
+            character: { connect: { id: character.id } },
+          },
+        });
+      }
+      chatId = chatInstance.id;
+      // Save user message
+      if (effectiveMessage) {
+        await prisma.message.create({
+          data: {
+            chat: { connect: { id: chatId } },
+            sender: 'user',
+            text: effectiveMessage,
+          },
+        });
+      }
+    }
+  } catch (err) {
+    console.error('Error saving chat/message:', err);
+  }
 
   // --- Detect explicit and implicit user feedback/requests/preferences ---
   const feedbackPatterns = [
@@ -867,7 +901,21 @@ ${character.name}: **I pause, gathering my thoughts.** _So much has happened alr
     const aiMessage = formatResponse(response.choices[0].message.content.trim(), Array.isArray(history) ? history : []);
     // Debug: Log the raw OpenAI response
     console.log("RAW OPENAI RESPONSE:\n", aiMessage);
-    res.json({ reply: aiMessage });
+    // Save AI message to DB if chatId exists
+    if (chatId && aiMessage) {
+      try {
+        await prisma.message.create({
+          data: {
+            chat: { connect: { id: chatId } },
+            sender: 'ai',
+            text: aiMessage,
+          },
+        });
+      } catch (err) {
+        console.error('Error saving AI message:', err);
+      }
+    }
+    res.json({ reply: aiMessage, chatId });
   } catch (error) {
     console.error("OpenAI Error:", error.message);
     res.status(500).json({
