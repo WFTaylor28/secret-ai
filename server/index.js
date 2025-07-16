@@ -6,6 +6,9 @@ const { OpenAI } = require("openai");
 const express = require('express');
 const cors = require('cors');
 const app = express();
+// Middleware (must be before any routes)
+app.use(cors());
+app.use(express.json());
 
 // Registration endpoint
 app.post('/register', async (req, res) => {
@@ -47,9 +50,7 @@ app.post('/register', async (req, res) => {
   }
 });
 // ...existing code...
-// Middleware
-app.use(cors());
-app.use(express.json());
+// ...existing code...
 
 // Serve static files from client folder (React app)
 app.use(express.static(path.resolve(__dirname, "../client")));
