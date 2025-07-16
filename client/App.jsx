@@ -841,7 +841,7 @@ const App = () => {
                     className="w-full text-left px-4 py-2 rounded hover:bg-pink-700/40 text-red-300 font-semibold"
                     onClick={() => {
                       setIsLoggedIn(false);
-                      setUser({});
+                      setUser({ characters: [] });
                       setShowAccountDropdown(false);
                     }}
                   >Log Out</button>
