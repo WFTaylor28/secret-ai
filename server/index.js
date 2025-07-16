@@ -1,6 +1,11 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
 const prisma = new PrismaClient();
+const path = require("path");
+const { OpenAI } = require("openai");
+const express = require('express');
+const cors = require('cors');
+const app = express();
 
 // Registration endpoint
 app.post('/register', async (req, res) => {
@@ -31,11 +36,6 @@ app.post('/register', async (req, res) => {
   }
 });
 // ...existing code...
-const path = require("path");
-const { OpenAI } = require("openai");
-
-const app = express();
-
 // Middleware
 app.use(cors());
 app.use(express.json());
