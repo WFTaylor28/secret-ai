@@ -45,8 +45,23 @@ app.post('/register', async (req, res) => {
     });
     res.status(201).json({ id: user.id, username: user.username, email: user.email });
   } catch (err) {
+    // Enhanced error logging for debugging
     console.error('Registration error:', err);
-    res.status(500).json({ error: 'Registration failed.', details: err.message, code: err.code });
+    if (err instanceof Error) {
+      console.error('Error stack:', err.stack);
+    }
+    // Log all error properties if available
+    if (typeof err === 'object' && err !== null) {
+      Object.entries(err).forEach(([key, value]) => {
+        console.error(`Error property [${key}]:`, value);
+      });
+    }
+    res.status(500).json({
+      error: 'Registration failed.',
+      details: err.message || String(err),
+      code: err.code || null,
+      fullError: err
+    });
   }
 });
 // ...existing code...
