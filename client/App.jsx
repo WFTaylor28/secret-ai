@@ -168,6 +168,7 @@ const App = () => {
     isPublic: false,
     nsfw: false,
     tags: [],
+    // memory: undefined, // REMOVE memory from state entirely
   });
 
   // Chat sessions: [{ characterId, messages: [], lastActive, ... }]
@@ -270,19 +271,53 @@ const App = () => {
   };
 
   // Submit new character
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     // Require name, image, description, scenario, and firstMessage
     if (!newCharacter.name.trim() || !newCharacter.image || !newCharacter.description.trim() || !newCharacter.scenario.trim() || !newCharacter.firstMessage || !newCharacter.firstMessage.trim()) {
       setCharacterModal({ open: true, message: "Please fill in all required fields: Name, Image, Description, Scenario, and First Message.", isError: true });
       return;
     }
+    // Save to local state immediately
     const createdCharacter = {
       ...newCharacter,
       id: Date.now(),
     };
     setCreatedCharacters((prev) => [...prev, createdCharacter]);
-    setCharacterModal({ open: true, message: `Character \"${createdCharacter.name}\" created successfully!`, isError: false });
+
+    // Send to backend
+    try {
+      // You may need to get userId from your auth/user context
+      const userId = user && user.id ? user.id : null;
+      if (!userId) {
+        setCharacterModal({ open: true, message: "You must be logged in to create a character.", isError: true });
+        return;
+      }
+    // Prepare payload for backend (do NOT include memory field)
+    const characterData = { ...newCharacter };
+    if ('memory' in characterData) delete characterData.memory;
+    const payload = {
+      userId,
+      name: characterData.name,
+      description: characterData.description,
+      imageUrl: characterData.image || null,
+      backstory: characterData.backstory || '',
+      personality: characterData.personality || '',
+      motivations: characterData.motivations || '',
+      values: characterData.values || '',
+      accent: characterData.accent || '',
+      scenario: characterData.scenario || '',
+      isPublic: !!characterData.isPublic,
+      nsfw: !!characterData.nsfw,
+      firstMessage: characterData.firstMessage || '',
+      tags: Array.isArray(characterData.tags) ? characterData.tags : [],
+    };
+    await axios.post("/characters", payload);
+      setCharacterModal({ open: true, message: `Character \"${createdCharacter.name}\" created and saved!`, isError: false });
+    } catch (err) {
+      setCharacterModal({ open: true, message: `Failed to save character to database: ${err?.response?.data?.error || err.message}`, isError: true });
+    }
+
     setNewCharacter({
       name: "",
       image: null,
@@ -296,6 +331,7 @@ const App = () => {
       isPublic: false,
       nsfw: false,
       firstMessage: "",
+      tags: [],
     });
   };
 

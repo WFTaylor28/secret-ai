@@ -205,7 +205,7 @@ app.get("/my-chats", async (req, res) => {
 // POST /characters - create a new character for the logged-in user
 app.post("/characters", async (req, res) => {
   const userId = req.body.userId;
-  const { name, description, backstory, personality, memory, scenario, nsfw, firstMessage, tags } = req.body;
+  const { name, description, backstory, personality, scenario, nsfw, firstMessage, tags } = req.body;
   if (!userId || !name || !description) {
     return res.status(400).json({ error: "Missing required fields: userId, name, description." });
   }
@@ -217,7 +217,6 @@ app.post("/characters", async (req, res) => {
         description,
         backstory: backstory || '',
         personality: personality || '',
-        memory: memory || '',
         scenario: scenario || '',
         nsfw: !!nsfw,
         firstMessage: firstMessage || '',
