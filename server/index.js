@@ -205,7 +205,7 @@ app.get("/my-chats", async (req, res) => {
 // POST /characters - create a new character for the logged-in user
 app.post("/characters", async (req, res) => {
   const userId = req.body.userId;
-  const { name, description, backstory, personality, memory, scenario, nsfw, firstMessage } = req.body;
+  const { name, description, backstory, personality, memory, scenario, nsfw, firstMessage, tags } = req.body;
   if (!userId || !name || !description) {
     return res.status(400).json({ error: "Missing required fields: userId, name, description." });
   }
@@ -221,9 +221,15 @@ app.post("/characters", async (req, res) => {
         scenario: scenario || '',
         nsfw: !!nsfw,
         firstMessage: firstMessage || '',
+        tags: Array.isArray(tags) ? tags : (typeof tags === 'string' ? tags.split(',').map(t => t.trim()).filter(Boolean) : []),
       },
     });
-    res.status(201).json({ character });
+    // Explicitly send firstMessage and tags in the response schema
+    res.status(201).json({ character: {
+      ...character,
+      firstMessage: character.firstMessage,
+      tags: character.tags
+    }});
   } catch (err) {
     console.error("Error creating character:", err);
     res.status(500).json({ error: "Failed to create character", details: err.message });

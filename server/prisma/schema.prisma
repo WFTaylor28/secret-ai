@@ -21,22 +21,24 @@ model User {
 }
 
 model Character {
-  id          Int      @id @default(autoincrement())
-  user        User     @relation(fields: [userId], references: [id])
-  userId      Int
-  name        String
-  description String
-  imageUrl    String?
-  backstory   String?
-  personality String?
-  motivations String?
-  values      String?
-  accent      String?
-  scenario    String?
-  isPublic    Boolean  @default(false)
-  nsfw        Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  chats       Chat[]
+  id            Int      @id @default(autoincrement())
+  user          User     @relation(fields: [userId], references: [id])
+  userId        Int
+  name          String
+  description   String
+  imageUrl      String?
+  backstory     String?
+  personality   String?
+  motivations   String?
+  values        String?
+  accent        String?
+  scenario      String?
+  isPublic      Boolean  @default(false)
+  nsfw          Boolean  @default(false)
+  firstMessage  String?  // New: starter message for the character
+  tags          String[] // New: tags for the character
+  createdAt     DateTime @default(now())
+  chats         Chat[]
 }
 
 model Chat {
