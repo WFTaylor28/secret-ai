@@ -1,3 +1,27 @@
+// DEBUG: Print Prisma Character model fields
+app.get('/debug/prisma-character-fields', async (req, res) => {
+  try {
+    // Try to create a dummy query and return the keys of the model
+    const character = await prisma.character.findFirst();
+    if (character) {
+      res.json({ fields: Object.keys(character) });
+    } else {
+      // If no character exists, create a dummy and then delete it
+      const dummy = await prisma.character.create({
+        data: {
+          userId: 1,
+          name: 'debug',
+          description: 'debug',
+        }
+      });
+      const fields = Object.keys(dummy);
+      await prisma.character.delete({ where: { id: dummy.id } });
+      res.json({ fields });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message, stack: err.stack });
+  }
+});
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
 const prisma = new PrismaClient();
