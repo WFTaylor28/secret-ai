@@ -1,4 +1,17 @@
 // DEBUG: Print Prisma Character model fields
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcrypt');
+const prisma = new PrismaClient();
+const path = require("path");
+const { OpenAI } = require("openai");
+const express = require('express');
+const cors = require('cors');
+const app = express();
+// Middleware (must be before any routes)
+app.use(cors());
+app.use(express.json());
+
+// DEBUG: Print Prisma Character model fields
 app.get('/debug/prisma-character-fields', async (req, res) => {
   try {
     // Try to create a dummy query and return the keys of the model
@@ -22,17 +35,6 @@ app.get('/debug/prisma-character-fields', async (req, res) => {
     res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcrypt');
-const prisma = new PrismaClient();
-const path = require("path");
-const { OpenAI } = require("openai");
-const express = require('express');
-const cors = require('cors');
-const app = express();
-// Middleware (must be before any routes)
-app.use(cors());
-app.use(express.json());
 
 // Registration endpoint
 app.post('/register', async (req, res) => {
