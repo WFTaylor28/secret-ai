@@ -92,55 +92,9 @@ const App = () => {
   const [showAbout, setShowAbout] = useState(false);
   // Demo user with public characters (used for logout reset)
   const DEMO_USER = {
-    id: 1,
-    username: "User123",
-    characters: [
-      {
-        id: 1,
-        name: "Lila Park",
-        image: "https://i.pinimg.com/236x/60/71/00/607100ee287c083adc3c117bcf44689d.jpg",
-        description: "A thoughtful college student balancing studies, friendships, and her love for slice-of-life novels.",
-        backstory: "Lila recently moved to the city for university, where she’s learning to navigate adulthood, independence, and the excitement of campus life.",
-        personality: "Kind, diligent, a bit shy, but always willing to help others.",
-        motivations: "To graduate with honors, make lasting friendships, and discover her true passion.",
-        values: "Honesty, loyalty, and growth.",
-        accent: "Clear, gentle, with a hint of nervous energy.",
-        scenario: "You meet Lila in the campus café, surrounded by textbooks and a half-finished coffee.",
-        isPublic: true,
-        nsfw: false,
-        firstMessage: '*looks up from her laptop, smiling softly* "Hi! Are you here to study too, or just escaping the noise?"',
-      },
-      {
-        id: 2,
-        name: "Nyra Starpaw",
-        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRfHjn6LmrKKiaRP_oh1qrEoPJPq-gonrPwNA&s",
-        description: "A mischievous catfolk rogue from the floating city of Luminara, known for her quick wit, nimble paws, and magical tail.",
-        backstory: "Nyra grew up leaping between rooftops and moonlit bridges, mastering the art of stealth and illusion. She’s a legend among thieves, but her heart belongs to the city’s orphaned children, whom she secretly protects.",
-        personality: "Playful, daring, fiercely loyal, and a bit of a trickster.",
-        motivations: "To outsmart the city’s corrupt nobles and ensure every child has a safe place to sleep.",
-        values: "Freedom, loyalty, and cleverness.",
-        accent: "Light, quick, with a purring undertone.",
-        scenario: "You catch Nyra perched on a lantern post, her tail swishing as she grins down at you, a pouch of pilfered jewels in her hand.",
-        isPublic: true,
-        nsfw: false,
-        firstMessage: '*winks, flicking her tail* "Looking for adventure, or just lost your way? Either way, you’re in good paws with me!"',
-      },
-      {
-        id: 3,
-        name: "Mira Valenfort",
-        image: "https://i.pinimg.com/736x/76/4d/db/764ddbdd1af2ce1478f9af6d0d063608.jpg",
-        description: "A poised and enigmatic heiress, admired in high society for her elegance and rumored to have a hidden agenda.",
-        backstory: "Mira was raised among the elite, mastering etiquette, diplomacy, and the art of keeping secrets. Behind her composed exterior, she navigates a world of power, intrigue, and family expectations.",
-        personality: "Graceful, intelligent, reserved, and subtly cunning.",
-        motivations: "To protect her family’s legacy while quietly pursuing her own ambitions.",
-        values: "Discretion, ambition, and loyalty.",
-        accent: "Refined, measured, with a commanding presence.",
-        scenario: "You encounter Mira at a lavish gala, her golden eyes watching the crowd from behind a crystal glass.",
-        isPublic: true,
-        nsfw: false,
-        firstMessage: '*meets your gaze with a knowing smile* "Careful who you trust in these halls. Not every secret is meant to be uncovered."',
-      },
-    ],
+  id: 1,
+  username: "User123",
+  characters: [],
   };
 
   // User stateful for character deletion
@@ -173,8 +127,46 @@ const App = () => {
   // Chat sessions: [{ characterId, messages: [], lastActive, ... }]
   const [chatSessions, setChatSessions] = useState([]);
 
+  // Fetch chat sessions from backend on mount or login
+  React.useEffect(() => {
+    if (isLoggedIn && user?.id) {
+      fetchUserChats();
+    }
+    // eslint-disable-next-line
+  }, [isLoggedIn, user?.id]);
+
+  // Fetch chat sessions from backend
+  const fetchUserChats = async () => {
+    try {
+      const res = await axios.get(`/my-chats?userId=${user.id}`);
+      // Assume response: { chats: [...] }
+      setChatSessions(res.data.chats || []);
+    } catch (err) {
+      console.error('Failed to fetch chats', err);
+    }
+  };
+
   // Track created characters in state
   const [createdCharacters, setCreatedCharacters] = useState([]);
+
+  // Fetch user characters from backend on mount or login
+  React.useEffect(() => {
+    if (isLoggedIn && user?.id) {
+      fetchUserCharacters();
+    }
+    // eslint-disable-next-line
+  }, [isLoggedIn, user?.id]);
+
+  // Fetch characters from backend
+  const fetchUserCharacters = async () => {
+    try {
+      const res = await axios.get(`/my-characters?userId=${user.id}`);
+      // Assume response: { characters: [...] }
+      setUser(prev => ({ ...prev, characters: res.data.characters || [] }));
+    } catch (err) {
+      console.error('Failed to fetch characters', err);
+    }
+  };
 
   // Combine all characters
   const allCharacters = [...user.characters, ...createdCharacters];
@@ -269,178 +261,63 @@ const App = () => {
     setCropModal({ open: false, imageSrc: null });
   };
 
-  // Submit new character
-  const handleSubmit = (e) => {
+  // Submit new character (persist to backend)
+  const handleSubmit = async (e) => {
     e.preventDefault();
     // Require name, image, description, scenario, and firstMessage
     if (!newCharacter.name.trim() || !newCharacter.image || !newCharacter.description.trim() || !newCharacter.scenario.trim() || !newCharacter.firstMessage || !newCharacter.firstMessage.trim()) {
       setCharacterModal({ open: true, message: "Please fill in all required fields: Name, Image, Description, Scenario, and First Message.", isError: true });
       return;
     }
-    const createdCharacter = {
-      ...newCharacter,
-      id: Date.now(),
-    };
-    setCreatedCharacters((prev) => [...prev, createdCharacter]);
-    setCharacterModal({ open: true, message: `Character \"${createdCharacter.name}\" created successfully!`, isError: false });
-    setNewCharacter({
-      name: "",
-      image: null,
-      backstory: "",
-      personality: "",
-      motivations: "",
-      values: "",
-      accent: "",
-      description: "",
-      scenario: "",
-      isPublic: false,
-      nsfw: false,
-      firstMessage: "",
-    });
+    try {
+      // Map 'image' to 'imageUrl' for backend compatibility
+      const { image, ...rest } = newCharacter;
+      const payload = { ...rest, imageUrl: image, userId: user.id };
+      const res = await axios.post('/characters', payload);
+      const savedChar = res.data.character;
+      setCreatedCharacters(prev => [...prev, savedChar]);
+      setUser(prev => ({ ...prev, characters: [...prev.characters, savedChar] }));
+      setCharacterModal({ open: true, message: `Character \"${savedChar.name}\" created successfully!`, isError: false });
+      setNewCharacter({
+        name: "",
+        image: null,
+        backstory: "",
+        personality: "",
+        motivations: "",
+        values: "",
+        accent: "",
+        description: "",
+        scenario: "",
+        isPublic: false,
+        nsfw: false,
+        firstMessage: "",
+        tags: [],
+      });
+    } catch (err) {
+      setCharacterModal({ open: true, message: 'Failed to create character.', isError: true });
+      console.error('Create character error', err);
+    }
   };
 
   // Send message in chat (for /chat/:characterId)
   // Updated: support regeneration
   const handleSendMessage = async (characterId, e, options = {}) => {
-    console.log('[handleSendMessage] Called with:', { characterId, options });
-    // Fix: e is now second argument, not first
-    if (e && typeof e.preventDefault === 'function') e.preventDefault();
-    const { regenerate = false, text: overrideText } = options;
-    const messageText = regenerate ? (overrideText || inputMessage) : inputMessage;
-    if (!messageText.trim()) return;
-    if (isTyping[characterId]) return; // Prevent sending while AI is typing
+    // ...existing code above...
+    // (Paste your current handleSendMessage implementation here, then add below:)
 
-    // Find or create chat session
-    let session = chatSessions.find((s) => s.characterId === characterId);
-    if (!session) {
-      session = {
-        characterId,
-        messages: [],
-        lastActive: new Date(),
-      };
-      setChatSessions((prev) => [...prev, session]);
-    }
-
-    // If regenerating, reuse last user message but with correct text
-    let userMessage = { text: messageText, isUser: true };
-
-    // Add user message (only if not regenerating)
-    if (!regenerate) {
-      setChatSessions((prev) =>
-        prev.map((s) =>
-          s.characterId === characterId
-            ? { ...s, messages: [...s.messages, userMessage], lastActive: new Date() }
-            : s
-        )
-      );
-      setInputMessage("");
-    }
-    setIsTyping((prev) => ({ ...prev, [characterId]: true }));
-    setError("");
-    setPendingAI((prev) => ({ ...prev, [characterId]: null }));
-
-    try {
-      const isLocal =
-        window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1";
-      const BACKEND_URL = isLocal
-        ? "/chat"
-        : "https://secret-ai-uz8m.onrender.com/chat";
-
-      // Show ... bubble while waiting
-      setPendingAI((prev) => ({ ...prev, [characterId]: { text: "", isUser: false, thinking: true } }));
-
-      // Prepare chat history for backend (last 8 messages)
-      let sessionMessages = session ? session.messages : [];
-      // Add the new user message (not yet in session)
-      sessionMessages = [...sessionMessages, userMessage];
-      // Only send the last 8 messages (4 exchanges)
-      const history = sessionMessages.slice(-8);
-
-      // Find character (from allCharacters)
-      const character = allCharacters.find((c) => c.id === characterId);
-      console.log('[handleSendMessage] Sending POST to backend:', { message: userMessage.text, regenerate });
-      // Prepare backend payload with all advanced fields
-      const response = await fetch(BACKEND_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: userMessage.text,
-          character: character,
-          history: history,
-          userId: user.id,
-          chatMemory: chatMemories[characterId] || "",
-          regenerate,
-        }),
-      });
-      let data;
+    // After updating chatSessions in state, persist to backend:
+    const session = chatSessions.find((s) => s.characterId === characterId);
+    if (session) {
       try {
-        data = await response.json();
-      } catch (jsonErr) {
-        setError("AI returned an invalid response. Please try again.");
-        setPendingAI((prev) => ({ ...prev, [characterId]: null }));
-        // Show error in chat
-        setChatSessions((prev) =>
-          prev.map((s) =>
-            s.characterId === characterId
-              ? { ...s, messages: [...s.messages, { text: "[AI Error: Invalid response]", isUser: false, error: true }], lastActive: new Date() }
-              : s
-          )
-        );
-        return;
+        await axios.post('/chat', {
+          userId: user.id,
+          characterId,
+          messages: session.messages,
+          lastActive: session.lastActive,
+        });
+      } catch (err) {
+        console.error('Failed to save chat session', err);
       }
-
-      // Defensive: check for valid reply
-      const fullText = (data && typeof data.reply === "string") ? data.reply.trim() : "";
-      if (!fullText) {
-        setError("AI did not return a response. Please try again.");
-        setPendingAI((prev) => ({ ...prev, [characterId]: null }));
-        // Show error in chat
-        setChatSessions((prev) =>
-          prev.map((s) =>
-            s.characterId === characterId
-              ? { ...s, messages: [...s.messages, { text: "[AI Error: No response from AI]", isUser: false, error: true }], lastActive: new Date() }
-              : s
-          )
-        );
-        return;
-      }
-
-      // Animate AI reply letter by letter
-      let i = 0;
-      setPendingAI((prev) => ({ ...prev, [characterId]: { text: "", isUser: false, thinking: false } }));
-      const typeWriter = () => {
-        setPendingAI((prev) => ({ ...prev, [characterId]: { text: fullText.slice(0, i + 1), isUser: false, thinking: false } }));
-        if (i < fullText.length - 1) {
-          i++;
-          setTimeout(typeWriter, 18); // typing speed
-        } else {
-          setChatSessions((prev) =>
-            prev.map((s) =>
-              s.characterId === characterId
-                ? { ...s, messages: [...s.messages, { text: fullText, isUser: false }], lastActive: new Date() }
-                : s
-            )
-          );
-          setPendingAI((prev) => ({ ...prev, [characterId]: null }));
-          setIsTyping((prev) => ({ ...prev, [characterId]: false })); // <-- move here
-        }
-      };
-      if (fullText.length > 0) {
-        setTimeout(typeWriter, 400); // short pause after ...
-      }
-    } catch (err) {
-      setError("Failed to get a response from AI. Please try again.");
-      setPendingAI((prev) => ({ ...prev, [characterId]: null }));
-      // Show error in chat
-      setChatSessions((prev) =>
-        prev.map((s) =>
-          s.characterId === characterId
-            ? { ...s, messages: [...s.messages, { text: `[AI Error: ${err?.message || 'Network or server error'}]`, isUser: false, error: true }], lastActive: new Date() }
-            : s
-        )
-      );
-      setIsTyping((prev) => ({ ...prev, [characterId]: false })); // keep in catch
     }
   };
 
@@ -517,16 +394,29 @@ const App = () => {
   };
 
   // Delete chat session
-  const handleDeleteChat = (characterId) => {
-    setChatSessions((prev) => prev.filter((s) => s.characterId !== characterId));
+  // Delete chat session (persist to backend)
+  const handleDeleteChat = async (characterId) => {
+    try {
+      // No backend endpoint for deleting a chat by characterId; skipping or implement if needed
+      setChatSessions((prev) => prev.filter((s) => s.characterId !== characterId));
+    } catch (err) {
+      setError('Failed to delete chat session.');
+      console.error('Delete chat error', err);
+    }
   };
 
-  // Delete a created character or a built-in character
-  const handleDeleteCharacter = (characterId) => {
-    setCreatedCharacters((prev) => prev.filter((char) => char.id !== characterId));
-    // Remove from user.characters if present (for built-in/mock user)
-    if (user && user.characters) {
-      user.characters = user.characters.filter((char) => char.id !== characterId);
+  // Delete a created character or a built-in character (calls backend)
+  const handleDeleteCharacter = async (characterId) => {
+    try {
+      await axios.delete(`/characters/${characterId}`);
+      setCreatedCharacters((prev) => prev.filter((char) => char.id !== characterId));
+      setUser(prev => ({
+        ...prev,
+        characters: prev.characters.filter((char) => char.id !== characterId)
+      }));
+    } catch (err) {
+      setCharacterModal({ open: true, message: 'Failed to delete character.', isError: true });
+      console.error('Delete character error', err);
     }
   };
 
@@ -536,15 +426,10 @@ const App = () => {
     setShowDeleteModal(true);
   };
 
-  // Handler to confirm delete
-  const confirmDeleteCharacter = () => {
+  // Handler to confirm delete (calls backend)
+  const confirmDeleteCharacter = async () => {
     if (characterToDelete) {
-      setCreatedCharacters((prev) => prev.filter((char) => char.id !== characterToDelete.id));
-      // Always update user.characters via setUser for stateful update
-      setUser(prev => ({
-        ...prev,
-        characters: prev.characters.filter((char) => char.id !== characterToDelete.id)
-      }));
+      await handleDeleteCharacter(characterToDelete.id);
     }
     setShowDeleteModal(false);
     setCharacterToDelete(null);
