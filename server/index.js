@@ -11,8 +11,9 @@ const app = express();
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-user-id'],
-  credentials: false
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-user-id', 'Cache-Control', 'Pragma', 'Expires'],
+  credentials: false,
+  exposedHeaders: ['Content-Length', 'Content-Type']
 }));
 app.use(express.json());
 
@@ -295,6 +296,123 @@ app.get("/my-characters", async (req, res) => {
   } catch (err) {
     console.error("Error fetching user characters:", err);
     res.status(500).json({ error: "Failed to fetch characters", details: err.message });
+  }
+});
+
+// GET /api/characters/user/:userId - get all characters for a specific user (for compatibility with client)
+app.get("/api/characters/user/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+    
+    const characters = await prisma.character.findMany({
+      where: {
+        userId: parseInt(userId)
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+    
+    res.json(characters);
+  } catch (err) {
+    console.error('Error fetching characters:', err);
+    res.status(500).json({ error: "Failed to fetch characters", details: err.message });
+  }
+});
+
+// PUT /api/characters/:id - update a character
+app.put("/api/characters/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      name,
+      description,
+      imageUrl,
+      backstory,
+      personality,
+      motivations,
+      values,
+      accent,
+      scenario,
+      isPublic,
+      nsfw,
+      firstMessage,
+      tags
+    } = req.body;
+    
+    // Validate character ID
+    if (!id) {
+      return res.status(400).json({ error: "Character ID is required" });
+    }
+    
+    // First, check if the character exists
+    const existingCharacter = await prisma.character.findUnique({
+      where: { id: parseInt(id) }
+    });
+    
+    if (!existingCharacter) {
+      return res.status(404).json({ error: "Character not found" });
+    }
+    
+    // Update the character
+    const updatedCharacter = await prisma.character.update({
+      where: { id: parseInt(id) },
+      data: {
+        name: name || existingCharacter.name,
+        description: description || existingCharacter.description,
+        imageUrl: imageUrl !== undefined ? imageUrl : existingCharacter.imageUrl,
+        backstory: backstory !== undefined ? backstory : existingCharacter.backstory,
+        personality: personality !== undefined ? personality : existingCharacter.personality,
+        motivations: motivations !== undefined ? motivations : existingCharacter.motivations,
+        values: values !== undefined ? values : existingCharacter.values,
+        accent: accent !== undefined ? accent : existingCharacter.accent,
+        scenario: scenario !== undefined ? scenario : existingCharacter.scenario,
+        isPublic: isPublic !== undefined ? !!isPublic : existingCharacter.isPublic,
+        nsfw: nsfw !== undefined ? !!nsfw : existingCharacter.nsfw,
+        firstMessage: firstMessage !== undefined ? firstMessage : existingCharacter.firstMessage,
+        tags: Array.isArray(tags) ? tags : (typeof tags === 'string' ? tags.split(',').map(t => t.trim()).filter(Boolean) : existingCharacter.tags)
+      }
+    });
+    
+    res.json({ character: updatedCharacter });
+  } catch (err) {
+    console.error('Error updating character:', err);
+    res.status(500).json({ error: "Failed to update character", details: err.message });
+  }
+});
+
+// DELETE /api/characters/:id - delete a character
+app.delete("/api/characters/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Validate character ID
+    if (!id) {
+      return res.status(400).json({ error: "Character ID is required" });
+    }
+    
+    // First, check if the character exists
+    const existingCharacter = await prisma.character.findUnique({
+      where: { id: parseInt(id) }
+    });
+    
+    if (!existingCharacter) {
+      return res.status(404).json({ error: "Character not found" });
+    }
+    
+    // Delete the character
+    await prisma.character.delete({
+      where: { id: parseInt(id) }
+    });
+    
+    res.json({ success: true, message: "Character deleted successfully" });
+  } catch (err) {
+    console.error('Error deleting character:', err);
+    res.status(500).json({ error: "Failed to delete character", details: err.message });
   }
 });
 

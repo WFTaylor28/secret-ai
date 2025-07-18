@@ -12,7 +12,6 @@ import SearchResults from "./SearchResults";
 import MyCharacters from "./MyCharacters";
 import Cropper from "react-easy-crop";
 import getCroppedImg from "./getCroppedImg";
-import characterSync from "./characterSync"; // Import the character sync service
 
 // Glassmorphism and animation helpers
 const glass = "backdrop-blur-md bg-white/10 border border-white/20 shadow-xl";
@@ -155,10 +154,6 @@ const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false); // Replace with real auth later
   const [authLoading, setAuthLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false); // Added for API loading state
-  const [syncStatus, setSyncStatus] = useState(null); // Added for sync status
-  const [inputMessage, setInputMessage] = useState(""); // Added for chat input
-  const [isTyping, setIsTyping] = useState({}); // Added for typing indicators
-  const [pendingAI, setPendingAI] = useState({}); // Added for AI message processing state
 
   // Character creation form state (move this up)
   const [newCharacter, setNewCharacter] = useState({
@@ -182,44 +177,27 @@ const App = () => {
 
   // Track created characters in state
   const [createdCharacters, setCreatedCharacters] = useState([]);
-
+  
   // Function to load user characters from the database
   const fetchUserCharacters = async (userId) => {
     if (!userId) return;
     
     setIsLoading(true);
-    setSyncStatus({ type: 'info', message: 'Loading characters...' });
-    
     try {
-      console.log('Fetching characters for user ID:', userId);
-      const result = await characterSync.fetchUserCharacters(userId);
-      
-      if (result.success) {
-        console.log('Successfully loaded characters:', result.characters.length);
-        setCreatedCharacters(result.characters);
-        setSyncStatus({ 
-          type: 'success', 
-          message: result.message || 'Characters loaded successfully' 
-        });
-      } else {
-        console.error('Failed to load characters:', result.error);
-        setSyncStatus({ 
-          type: 'error', 
-          message: result.error || 'Failed to load characters' 
-        });
+      const response = await axios.get(`/api/characters/user/${userId}`);
+      if (response.data && Array.isArray(response.data)) {
+        // Store fetched characters in local state
+        setCreatedCharacters(response.data);
+        
+        // Store in localStorage as backup
+        localStorage.setItem('userCharacters', JSON.stringify(response.data));
       }
     } catch (error) {
       console.error('Failed to fetch characters:', error);
-      setSyncStatus({ 
-        type: 'error', 
-        message: 'Error loading characters: ' + (error.message || 'Unknown error') 
-      });
-      
       // Try to load from localStorage if API fails
-      const localCharacters = characterSync.getCharactersFromStorage();
-      if (localCharacters.length > 0) {
-        console.log('Loaded', localCharacters.length, 'characters from localStorage after API failure');
-        setCreatedCharacters(localCharacters);
+      const storedCharacters = localStorage.getItem('userCharacters');
+      if (storedCharacters) {
+        setCreatedCharacters(JSON.parse(storedCharacters));
       }
     } finally {
       setIsLoading(false);
@@ -230,111 +208,82 @@ const App = () => {
   const syncCharactersToDatabase = async () => {
     if (!isLoggedIn || !user.id) return;
     
-    setSyncStatus({ type: 'info', message: 'Syncing characters...' });
-    
     try {
-      console.log('Syncing characters to database for user ID:', user.id);
-      const result = await characterSync.syncToServer(user.id);
+      // Only sync characters that have a local ID (created in this session)
+      const localCharacters = createdCharacters.filter(char => 
+        typeof char.id === 'number' && char.id > 1000000);
       
-      if (result.success) {
-        console.log('Sync successful:', result.message);
-        setSyncStatus({ 
-          type: 'success', 
-          message: result.message || 'Characters synced successfully' 
-        });
+      if (localCharacters.length > 0) {
+        await Promise.all(localCharacters.map(char => {
+          // Prepare payload without temporary properties
+          const characterData = { ...char };
+          if ('memory' in characterData) delete characterData.memory;
+          
+          // If character has a temporary ID, create new, otherwise update
+          if (typeof char.id === 'number' && char.id > 1000000) {
+            return axios.post('/api/characters', {
+              userId: user.id,
+              ...characterData
+            });
+          } else {
+            return axios.put(`/api/characters/${char.id}`, characterData);
+          }
+        }));
         
-        if (result.characters) {
-          console.log('Updating local state with', result.characters.length, 'characters');
-          setCreatedCharacters(result.characters);
-        }
-      } else {
-        console.error('Sync failed:', result.error);
-        setSyncStatus({ 
-          type: 'error', 
-          message: result.error || 'Failed to sync characters' 
-        });
+        // Refresh characters from the server after sync
+        fetchUserCharacters(user.id);
       }
     } catch (error) {
       console.error('Failed to sync characters:', error);
-      setSyncStatus({ 
-        type: 'error', 
-        message: 'Error syncing characters: ' + (error.message || 'Unknown error') 
-      });
     }
   };
 
-  // Force sync characters from database and update local storage
-  const forceSyncCharacters = async () => {
-    if (!isLoggedIn || !user.id) {
-      setSyncStatus({ type: 'error', message: 'You must be logged in to sync characters' });
-      return;
-    }
-    
-    setIsLoading(true);
-    setSyncStatus({ type: 'info', message: 'Force syncing characters...' });
-    
-    try {
-      console.log('Starting force sync operation');
-      
-      // First fetch remote characters to ensure we have the latest
-      const fetchResult = await characterSync.fetchUserCharacters(user.id, true);
-      
-      if (fetchResult.success) {
-        console.log('Fetched', fetchResult.characters.length, 'characters from database');
-        
-        // Update our local state with these characters
-        setCreatedCharacters(fetchResult.characters);
-        
-        // Then sync any local changes back to server
-        const syncResult = await characterSync.syncToServer(user.id, true);
-        
-        if (syncResult.success) {
-          // Update local state with the final result
-          setCreatedCharacters(syncResult.characters || fetchResult.characters);
-          setSyncStatus({ 
-            type: 'success', 
-            message: 'Characters synced successfully!' 
-          });
-        } else {
-          setSyncStatus({ 
-            type: 'error', 
-            message: syncResult.error || 'Failed to sync characters to server' 
-          });
-        }
-      } else {
-        setSyncStatus({ 
-          type: 'error', 
-          message: fetchResult.error || 'Failed to fetch characters from server' 
-        });
-      }
-      
-      // Fetch a fresh copy of characters from localStorage after sync
-      const localCharacters = characterSync.getCharactersFromStorage();
-      setCreatedCharacters(localCharacters || []);
-    } catch (error) {
-      console.error('Force sync failed:', error);
-      setSyncStatus({ 
-        type: 'error', 
-        message: 'Error syncing characters: ' + (error.message || 'Unknown error') 
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };  // Load stored characters on login
+  // Load stored characters on login
   useEffect(() => {
     if (isLoggedIn && user && user.id) {
       fetchUserCharacters(user.id);
-      
-      // Start auto-sync for logged in users
-      characterSync.startAutoSync(user.id);
     }
     
-    // Cleanup on unmount or logout
-    return () => {
-      characterSync.stopAutoSync();
-    };
+    // Check localStorage for any unsaved characters
+    const storedCharacters = localStorage.getItem('userCharacters');
+    if (storedCharacters) {
+      const parsedCharacters = JSON.parse(storedCharacters);
+      if (Array.isArray(parsedCharacters) && parsedCharacters.length > 0) {
+        setCreatedCharacters(prev => {
+          // Merge with any existing characters, avoiding duplicates by ID
+          const existingIds = prev.map(char => char.id);
+          const newChars = parsedCharacters.filter(char => !existingIds.includes(char.id));
+          return [...prev, ...newChars];
+        });
+      }
+    }
   }, [isLoggedIn, user]);
   
+  // Setup auto-sync on interval and page unload
+  useEffect(() => {
+    // Sync every 5 minutes
+    const intervalId = setInterval(() => {
+      if (isLoggedIn) {
+        syncCharactersToDatabase();
+      }
+    }, 5 * 60 * 1000);
+    
+    // Sync on page unload
+    const handleBeforeUnload = () => {
+      if (isLoggedIn) {
+        // Store in localStorage before unload
+        localStorage.setItem('userCharacters', JSON.stringify(createdCharacters));
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isLoggedIn, createdCharacters]);
+
   // Combine all characters
   const allCharacters = [...user.characters, ...createdCharacters];
 
@@ -363,61 +312,13 @@ const App = () => {
     return hasTags && matchesText && matchesNSFW;
   });
 
-  // Handle login with character sync
-  const handleLogin = async (usernameOrEmail, password) => {
-    setAuthError("");
-    setAuthSuccess("");
-    setAuthLoading(true);
-    
-    try {
-      const res = await axios.post("/login", {
-        usernameOrEmail,
-        password,
-      });
-      
-      setIsLoggedIn(true);
-      setUser(u => ({ ...u, ...res.data }));
-      
-      // Fetch user's characters after login
-      if (res.data && res.data.id) {
-        fetchUserCharacters(res.data.id);
-      }
-      
-      setShowAuthModal(false);
-      setAuthForm({ username: '', email: '', password: '', confirmPassword: '' });
-      setAuthError("");
-      setAuthSuccess("");
-      
-      return true;
-    } catch (err) {
-      if (err.response && err.response.data && err.response.data.error) {
-        setAuthError(err.response.data.error);
-      } else {
-        setAuthError("Login failed. Please try again.");
-      }
-      setIsLoggedIn(false);
-      return false;
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-  
-  // Handle logout
-  const handleLogout = () => {
-    // Sync any unsaved characters before logging out
-    if (isLoggedIn && user && user.id) {
-      syncCharactersToDatabase();
-    }
-    
-    // Stop auto sync
-    characterSync.stopAutoSync();
-    
-    // Clear local state
-    setIsLoggedIn(false);
-    setUser(DEMO_USER);
-    setCreatedCharacters([]);
-    setShowAccountDropdown(false);
-  };
+  // Chat UI state (for /chat/:characterId)
+  const [inputMessage, setInputMessage] = useState("");
+  // Per-chat isTyping: { [characterId]: true/false }
+  const [isTyping, setIsTyping] = useState({});
+  const [error, setError] = useState("");
+  // Per-chat pendingAI: { [characterId]: { text, isUser, thinking } }
+  const [pendingAI, setPendingAI] = useState({});
 
   // State for delete confirmation modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -479,40 +380,36 @@ const App = () => {
   // Submit new character
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     // Require name, image, description, scenario, and firstMessage
-    if (!newCharacter.name.trim() || !newCharacter.image || !newCharacter.description.trim() || 
-        !newCharacter.scenario.trim() || !newCharacter.firstMessage || !newCharacter.firstMessage.trim()) {
-      setCharacterModal({ 
-        open: true, 
-        message: "Please fill in all required fields: Name, Image, Description, Scenario, and First Message.", 
-        isError: true 
-      });
+    if (!newCharacter.name.trim() || !newCharacter.image || !newCharacter.description.trim() || !newCharacter.scenario.trim() || !newCharacter.firstMessage || !newCharacter.firstMessage.trim()) {
+      setCharacterModal({ open: true, message: "Please fill in all required fields: Name, Image, Description, Scenario, and First Message.", isError: true });
       return;
     }
     
-    // Add to local storage and state via the sync service
+    // Generate a temporary local ID (using timestamp to ensure uniqueness)
     const tempId = Date.now() + Math.floor(Math.random() * 1000);
     
-    // Create local character with temp ID
+    // Save to local state immediately
     const createdCharacter = {
       ...newCharacter,
       id: tempId,
     };
     
-    // Update local state
-    setCreatedCharacters(prev => [...prev, createdCharacter]);
+    // Update local state first for immediate feedback
+    setCreatedCharacters((prev) => [...prev, createdCharacter]);
     
-    // Add to local storage
-    characterSync.addLocalCharacter(createdCharacter);
+    // Also save to localStorage as backup
+    const storedCharacters = localStorage.getItem('userCharacters');
+    const parsedChars = storedCharacters ? JSON.parse(storedCharacters) : [];
+    localStorage.setItem('userCharacters', JSON.stringify([...parsedChars, createdCharacter]));
     
-    // Show success modal
+    // Show success feedback to user
     setCharacterModal({ 
       open: true, 
       message: "Character created successfully! It will be saved to your account.", 
       isError: false 
     });
-    
+
     // Reset form
     setNewCharacter({
       name: "",
@@ -529,11 +426,80 @@ const App = () => {
       tags: [],
       firstMessage: "",
     });
-    
-    // If logged in, sync immediately
+
+    // If user is logged in, try to save to database in background
     if (isLoggedIn && user && user.id) {
-      syncCharactersToDatabase();
+      try {
+        // Prepare payload for backend (do NOT include memory field)
+        const characterData = { ...newCharacter };
+        if ('memory' in characterData) delete characterData.memory;
+        
+        const payload = {
+          userId: user.id,
+          name: characterData.name,
+          description: characterData.description,
+          imageUrl: characterData.image || null,
+          backstory: characterData.backstory || '',
+          personality: characterData.personality || '',
+          motivations: characterData.motivations || '',
+          values: characterData.values || '',
+          accent: characterData.accent || '',
+          scenario: characterData.scenario || '',
+          isPublic: !!characterData.isPublic,
+          nsfw: !!characterData.nsfw,
+          firstMessage: characterData.firstMessage || '',
+          tags: Array.isArray(characterData.tags) ? characterData.tags : [],
+        };
+        
+        // Send to backend asynchronously (don't await)
+        axios.post("/api/characters", payload)
+          .then(response => {
+            // If successful, update the local character with the server ID
+            if (response.data && response.data.id) {
+              setCreatedCharacters(prev => 
+                prev.map(char => 
+                  char.id === tempId 
+                    ? { ...char, id: response.data.id } 
+                    : char
+                )
+              );
+              
+              // Update localStorage
+              const storedChars = localStorage.getItem('userCharacters');
+              if (storedChars) {
+                const parsed = JSON.parse(storedChars);
+                const updated = parsed.map(char => 
+                  char.id === tempId 
+                    ? { ...char, id: response.data.id } 
+                    : char
+                );
+                localStorage.setItem('userCharacters', JSON.stringify(updated));
+              }
+            }
+          })
+          .catch(error => {
+            console.error("Failed to save character to server:", error);
+            // Character remains in local state with temp ID for later sync
+          });
+      } catch (error) {
+        console.error("Error preparing character data:", error);
+      }
     }
+  };
+      name: "",
+      image: null,
+      backstory: "",
+      personality: "",
+      motivations: "",
+      values: "",
+      accent: "",
+      description: "",
+      scenario: "",
+      isPublic: false,
+      nsfw: false,
+      firstMessage: "",
+      tags: [],
+    });
   };
 
   // Send message in chat (for /chat/:characterId)
@@ -758,18 +724,12 @@ const App = () => {
     setChatSessions((prev) => prev.filter((s) => s.characterId !== characterId));
   };
 
-  // Delete a character - now uses character sync service
-  const handleDeleteCharacter = async (characterId) => {
-    // First delete locally (sync service will handle local storage)
-    if (characterSync) {
-      await characterSync.deleteCharacter(characterId);
-    } else {
-      // Fallback to old behavior if sync service not available
-      setCreatedCharacters((prev) => prev.filter((char) => char.id !== characterId));
-      // Remove from user.characters if present (for built-in/mock user)
-      if (user && user.characters) {
-        user.characters = user.characters.filter((char) => char.id !== characterId);
-      }
+  // Delete a created character or a built-in character
+  const handleDeleteCharacter = (characterId) => {
+    setCreatedCharacters((prev) => prev.filter((char) => char.id !== characterId));
+    // Remove from user.characters if present (for built-in/mock user)
+    if (user && user.characters) {
+      user.characters = user.characters.filter((char) => char.id !== characterId);
     }
   };
 
@@ -780,20 +740,14 @@ const App = () => {
   };
 
   // Handler to confirm delete
-  const confirmDeleteCharacter = async () => {
+  const confirmDeleteCharacter = () => {
     if (characterToDelete) {
-      // Use the sync service to delete the character
-      if (characterSync) {
-        await handleDeleteCharacter(characterToDelete.id);
-      } else {
-        // Fallback to old behavior
-        setCreatedCharacters((prev) => prev.filter((char) => char.id !== characterToDelete.id));
-        // Always update user.characters via setUser for stateful update
-        setUser(prev => ({
-          ...prev,
-          characters: prev.characters.filter((char) => char.id !== characterToDelete.id)
-        }));
-      }
+      setCreatedCharacters((prev) => prev.filter((char) => char.id !== characterToDelete.id));
+      // Always update user.characters via setUser for stateful update
+      setUser(prev => ({
+        ...prev,
+        characters: prev.characters.filter((char) => char.id !== characterToDelete.id)
+      }));
     }
     setShowDeleteModal(false);
     setCharacterToDelete(null);
@@ -873,37 +827,28 @@ const App = () => {
     }
   };
 
-  // Save edited character - now uses character sync service
-  const handleSaveEditCharacter = async (e) => {
+  // Save edited character
+  const handleSaveEditCharacter = (e) => {
     e.preventDefault();
     if (!editCharacterForm) return;
-    
-    // Use character sync service to update the character
-    if (characterSync) {
-      await characterSync.updateCharacter(editCharacterForm);
-    } else {
-      // Fallback to old behavior
-      let updated = false;
-      setCreatedCharacters((prev) => {
-        if (prev.some((char) => char.id === editCharacterForm.id)) {
-          updated = true;
-          return prev.map((char) =>
-            char.id === editCharacterForm.id ? { ...editCharacterForm } : char
-          );
-        }
-        return prev;
-      });
-      
-      // If not found in createdCharacters, update in user.characters
-      if (!updated && user && user.characters) {
-        const idx = user.characters.findIndex((char) => char.id === editCharacterForm.id);
-        if (idx !== -1) {
-          user.characters[idx] = { ...editCharacterForm };
-        }
+    // Try to update in createdCharacters first
+    let updated = false;
+    setCreatedCharacters((prev) => {
+      if (prev.some((char) => char.id === editCharacterForm.id)) {
+        updated = true;
+        return prev.map((char) =>
+          char.id === editCharacterForm.id ? { ...editCharacterForm } : char
+        );
+      }
+      return prev;
+    });
+    // If not found in createdCharacters, update in user.characters
+    if (!updated && user && user.characters) {
+      const idx = user.characters.findIndex((char) => char.id === editCharacterForm.id);
+      if (idx !== -1) {
+        user.characters[idx] = { ...editCharacterForm };
       }
     }
-    
-    // Close the edit form
     setEditCharacter(null);
   };
 
@@ -925,16 +870,6 @@ const App = () => {
       `}</style>
       {/* Top Navigation Bar */}
       <nav className="w-full bg-gradient-to-r from-purple-900/80 to-indigo-900/80 shadow-lg z-20 sticky top-0">
-        {/* Sync Status Indicator */}
-        {syncStatus && (
-          <div className={`text-xs py-1 px-4 text-center transition-all ${
-            syncStatus.type === 'success' ? 'bg-green-800/60 text-green-200' : 
-            syncStatus.type === 'error' ? 'bg-red-800/60 text-red-200' : 
-            'bg-blue-800/60 text-blue-200'
-          }`}>
-            {syncStatus.message}
-          </div>
-        )}
         <div className="container mx-auto px-4 flex flex-col md:flex-row md:items-center md:justify-between" style={{ minHeight: '4.5rem' }}>
           {/* Mobile Header Row: Hamburger + Logo */}
           <div className="flex items-center justify-between w-full md:hidden pt-2 pb-1">
@@ -1110,7 +1045,15 @@ const App = () => {
                   <div className="border-t border-white/10 my-2" />
                   <button
                     className="w-full text-left px-4 py-2 rounded hover:bg-pink-700/40 text-red-300 font-semibold"
-                    onClick={handleLogout}
+                    onClick={() => {
+                      // Sync any unsaved characters before logging out
+                      syncCharactersToDatabase();
+                      // Clear local state
+                      setIsLoggedIn(false);
+                      setUser(DEMO_USER);
+                      setCreatedCharacters([]);
+                      setShowAccountDropdown(false);
+                    }}
                   >Log Out</button>
                 </div>
               )}
@@ -1168,14 +1111,36 @@ const App = () => {
           {authStep === 'login' && (
             <form className="space-y-4" onSubmit={async e => {
               e.preventDefault();
-              
-              // Use the handleLogin function instead
-              const success = await handleLogin(
-                authForm.username || authForm.email,
-                authForm.password
-              );
-              
-              if (!success) {
+              setAuthError("");
+              setAuthSuccess("");
+              setAuthLoading(true);
+              try {
+                // Allow login with username or email (prefer username if filled)
+                const usernameOrEmail = authForm.username || authForm.email;
+                const res = await axios.post("/login", {
+                  usernameOrEmail,
+                  password: authForm.password,
+                });
+                setIsLoggedIn(true);
+                setUser(u => ({ ...u, ...res.data }));
+                
+                // Fetch user's characters after login
+                if (res.data && res.data.id) {
+                  fetchUserCharacters(res.data.id);
+                }
+                
+                setShowAuthModal(false);
+                setAuthForm({ username: '', email: '', password: '', confirmPassword: '' });
+                setAuthError("");
+                setAuthSuccess("");
+              } catch (err) {
+                if (err.response && err.response.data && err.response.data.error) {
+                  setAuthError(err.response.data.error);
+                } else {
+                  setAuthError("Login failed. Please try again.");
+                }
+                setIsLoggedIn(false);
+              } finally {
                 setAuthLoading(false);
               }
             }}>
@@ -1405,8 +1370,6 @@ const App = () => {
                 onEditCharacter={handleEditCharacter}
                 onDeleteCharacter={requestDeleteCharacter}
                 onChatWithCharacter={openChatWithCharacter}
-                onForceSync={forceSyncCharacters}
-                isLoading={isLoading}
               />
             }
           />
