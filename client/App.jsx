@@ -1911,10 +1911,18 @@ function ChatPage({ user, getChatSession, handleSendMessage, inputMessage, setIn
   const { characterId } = useParams();
   // Defensive fallback for user
   const safeUser = user || { characters: [] };
-  if (!safeUser || !safeUser.characters) {
+  if (!safeUser) {
     return <div className="text-center py-12">Loading character...</div>;
   }
-  const character = safeUser.characters.find((c) => c.id === Number(characterId));
+  
+  // First try to find the character in user.characters
+  let character = safeUser.characters && safeUser.characters.find((c) => c.id === Number(characterId));
+  
+  // If not found in user.characters, try to find it in allCharacters
+  if (!character && allCharacters && allCharacters.length > 0) {
+    character = allCharacters.find((c) => c.id === Number(characterId));
+  }
+  
   if (!character) {
     return <div className="text-center text-red-400 py-12">Character not found.</div>;
   }
