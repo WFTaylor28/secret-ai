@@ -159,6 +159,7 @@ const App = () => {
   const [inputMessage, setInputMessage] = useState(""); // Added for chat input
   const [isTyping, setIsTyping] = useState({}); // Added for typing indicators
   const [pendingAI, setPendingAI] = useState({}); // Added for AI message processing state
+  const [error, setError] = useState(""); // Added for error handling
 
   // Character creation form state (move this up)
   const [newCharacter, setNewCharacter] = useState({
