@@ -91,60 +91,12 @@ const App = () => {
   const [showMenu, setShowMenu] = useState(false); // Used for mobile drawer
   const [showFAQ, setShowFAQ] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
-  // Demo user with public characters (used for logout reset)
+  // Demo user with empty character array (used for logout reset)
   const DEMO_USER = {
     id: 1,
     username: "User123",
-    characters: [
-      {
-        id: 1,
-        name: "Lila Park",
-        image: "https://i.pinimg.com/236x/60/71/00/607100ee287c083adc3c117bcf44689d.jpg",
-        description: "A thoughtful college student balancing studies, friendships, and her love for slice-of-life novels.",
-        backstory: "Lila recently moved to the city for university, where she’s learning to navigate adulthood, independence, and the excitement of campus life.",
-        personality: "Kind, diligent, a bit shy, but always willing to help others.",
-        motivations: "To graduate with honors, make lasting friendships, and discover her true passion.",
-        values: "Honesty, loyalty, and growth.",
-        accent: "Clear, gentle, with a hint of nervous energy.",
-        scenario: "You meet Lila in the campus café, surrounded by textbooks and a half-finished coffee.",
-        isPublic: true,
-        nsfw: false,
-        firstMessage: '*looks up from her laptop, smiling softly* "Hi! Are you here to study too, or just escaping the noise?"',
-      },
-      {
-        id: 2,
-        name: "Nyra Starpaw",
-        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRfHjn6LmrKKiaRP_oh1qrEoPJPq-gonrPwNA&s",
-        description: "A mischievous catfolk rogue from the floating city of Luminara, known for her quick wit, nimble paws, and magical tail.",
-        backstory: "Nyra grew up leaping between rooftops and moonlit bridges, mastering the art of stealth and illusion. She’s a legend among thieves, but her heart belongs to the city’s orphaned children, whom she secretly protects.",
-        personality: "Playful, daring, fiercely loyal, and a bit of a trickster.",
-        motivations: "To outsmart the city’s corrupt nobles and ensure every child has a safe place to sleep.",
-        values: "Freedom, loyalty, and cleverness.",
-        accent: "Light, quick, with a purring undertone.",
-        scenario: "You catch Nyra perched on a lantern post, her tail swishing as she grins down at you, a pouch of pilfered jewels in her hand.",
-        isPublic: true,
-        nsfw: false,
-        firstMessage: '*winks, flicking her tail* "Looking for adventure, or just lost your way? Either way, you’re in good paws with me!"',
-      },
-      {
-        id: 3,
-        name: "Mira Valenfort",
-        image: "https://i.pinimg.com/736x/76/4d/db/764ddbdd1af2ce1478f9af6d0d063608.jpg",
-        description: "A poised and enigmatic heiress, admired in high society for her elegance and rumored to have a hidden agenda.",
-        backstory: "Mira was raised among the elite, mastering etiquette, diplomacy, and the art of keeping secrets. Behind her composed exterior, she navigates a world of power, intrigue, and family expectations.",
-        personality: "Graceful, intelligent, reserved, and subtly cunning.",
-        motivations: "To protect her family’s legacy while quietly pursuing her own ambitions.",
-        values: "Discretion, ambition, and loyalty.",
-        accent: "Refined, measured, with a commanding presence.",
-        scenario: "You encounter Mira at a lavish gala, her golden eyes watching the crowd from behind a crystal glass.",
-        isPublic: true,
-        nsfw: false,
-        firstMessage: '*meets your gaze with a knowing smile* "Careful who you trust in these halls. Not every secret is meant to be uncovered."',
-      },
-    ],
+    characters: [],
   };
-
-  // User stateful for character deletion
   const [user, setUser] = useState(DEMO_USER);
   // --- Auth Modal State ---
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -1914,7 +1866,9 @@ function ChatPage({ user, getChatSession, handleSendMessage, inputMessage, setIn
   if (!safeUser || !safeUser.characters) {
     return <div className="text-center py-12">Loading character...</div>;
   }
-  const character = safeUser.characters.find((c) => c.id === Number(characterId));
+  
+  // Look for the character in allCharacters, not just user.characters
+  const character = allCharacters.find((c) => c.id === Number(characterId));
   if (!character) {
     return <div className="text-center text-red-400 py-12">Character not found.</div>;
   }
