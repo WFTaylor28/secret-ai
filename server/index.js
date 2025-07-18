@@ -131,8 +131,9 @@ app.post('/login', async (req, res) => {
 // ...existing code...
 // ...existing code...
 
-// Serve static files from client folder (React app)
-app.use(express.static(path.resolve(__dirname, "../client")));
+// API routes should be defined here, before static file middleware
+// DO NOT SERVE STATIC FILES HERE - They are served at the end of the file
+
 
 // --- MARKOV CHAIN DEMO GENERATOR ---
 // This is a simple, optional Markov chain text generator for demo/educational purposes only.
@@ -389,30 +390,48 @@ app.put("/api/characters/:id", async (req, res) => {
 app.delete("/api/characters/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    console.log(`DELETE character request received for ID: ${id}`);
     
     // Validate character ID
     if (!id) {
+      console.log('Character ID is missing in request');
       return res.status(400).json({ error: "Character ID is required" });
+    }
+    
+    // Ensure ID is a valid number
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId)) {
+      console.log(`Invalid character ID format: ${id}`);
+      return res.status(400).json({ error: "Invalid character ID format" });
     }
     
     // First, check if the character exists
     const existingCharacter = await prisma.character.findUnique({
-      where: { id: parseInt(id) }
+      where: { id: parsedId }
     });
     
     if (!existingCharacter) {
+      console.log(`Character not found with ID: ${parsedId}`);
       return res.status(404).json({ error: "Character not found" });
     }
     
+    console.log(`Found character to delete: ${existingCharacter.name} (ID: ${parsedId})`);
+    
     // Delete the character
     await prisma.character.delete({
-      where: { id: parseInt(id) }
+      where: { id: parsedId }
     });
     
+    console.log(`Character deleted successfully: ${parsedId}`);
     res.json({ success: true, message: "Character deleted successfully" });
   } catch (err) {
     console.error('Error deleting character:', err);
-    res.status(500).json({ error: "Failed to delete character", details: err.message });
+    // Send more detailed error response
+    res.status(500).json({ 
+      error: "Failed to delete character", 
+      details: err.message,
+      stack: process.env.NODE_ENV === 'production' ? undefined : err.stack
+    });
   }
 });
 
@@ -1170,18 +1189,46 @@ ${character.name}: **I pause, gathering my thoughts.** _So much has happened alr
   }
 });
 
+// Debug endpoint to test API route access
+app.get('/api/debug/routes', (req, res) => {
+  res.json({
+    message: 'API routes are accessible',
+    timestamp: new Date().toISOString(),
+    routes: {
+      'GET /api/characters': 'List all characters',
+      'GET /api/characters/:id': 'Get a specific character',
+      'POST /api/characters': 'Create a new character',
+      'PUT /api/characters/:id': 'Update a character',
+      'DELETE /api/characters/:id': 'Delete a character'
+    }
+  });
+});
+
 // (Removed duplicate legacy code block)
 
 // API routes should be defined before the catch-all routes
 
 // Serve static files correctly in production
 if (process.env.NODE_ENV === "production") {
+  // Add verbose logging for API requests in production
+  app.use('/api', (req, res, next) => {
+    console.log(`API Request: ${req.method} ${req.originalUrl}`);
+    next();
+  });
+  
   app.use(express.static(path.resolve(__dirname, "../client/build")));
+  
   // Only use the catch-all for non-API routes
   app.get(/^(?!\/api\/).*/i, (req, res) => {
     res.sendFile(path.resolve(__dirname, "../client/build", "index.html"));
   });
 } else {
+  // Add verbose logging for API requests in development
+  app.use('/api', (req, res, next) => {
+    console.log(`API Request: ${req.method} ${req.originalUrl}`);
+    next();
+  });
+  
   // All other GET requests not handled before will go to React app (dev)
   // Only use the catch-all for non-API routes
   app.get(/^(?!\/api\/).*/i, (req, res) =>
