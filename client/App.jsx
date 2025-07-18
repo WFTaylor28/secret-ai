@@ -809,18 +809,6 @@ const App = () => {
   const getChatSession = (characterId) =>
     chatSessions.find((s) => s.characterId === characterId) || { messages: [] };
 
-  // Prepare chatSessions for MyChats page
-  const myChatSessions = chatSessions.map((chatSession) => {
-    const character = user.characters.find((userCharacter) => userCharacter.id === chatSession.characterId);
-    const lastMessage = chatSession.messages.length > 0 ? chatSession.messages[chatSession.messages.length - 1].text : null;
-    return {
-      character,
-      lastMessage,
-      lastActive: chatSession.lastActive,
-      messageCount: chatSession.messages.length,
-    };
-  }).filter((session) => session.character); // Only show if character still exists
-
   // Handler to open chat memory modal for a character
   const handleShowChatMemory = (characterId) => {
     setChatMemoryCharacterId(characterId);
@@ -1356,7 +1344,8 @@ const App = () => {
             element={
               <MyChats
                 user={user}
-                chatSessions={myChatSessions}
+                chatSessions={chatSessions}
+                allCharacters={allCharacters}
                 onContinueChat={openChatWithCharacter}
                 onDeleteChat={handleDeleteChat}
                 openCharacterProfile={openCharacterProfile}

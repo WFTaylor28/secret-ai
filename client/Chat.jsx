@@ -1,7 +1,18 @@
 import React, { useEffect, useRef } from "react";
 // Helper to render chat message formatting (actions/expressions/thoughts)
 function renderFormattedMessage(text, isUser) {
-  // *action* or **action** to <em>
+                  <div className="flex items-center p-2 border-b border-gray-700 mb-2">
+                  <img
+                    src={activeCharacter.image || activeCharacter.imageUrl || 'https://via.placeholder.com/128x128?text=No+Image'}
+                    alt={activeCharacter.name}
+                    className="w-10 h-10 rounded-full object-cover mr-3"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://via.placeholder.com/128x128?text=Image+Error';
+                    }}
+                  />
+                  <h4 className="font-semibold">{activeCharacter.name}</h4>
+                </div>tion* or **action** to <em>
   // For user, use a different class for <em>
   // Robustly match both *action* and **action** (not followed by colon), hide asterisks
   // Handles overlapping and nested asterisks, and does not match inside words
@@ -173,9 +184,13 @@ const Chat = ({
                 </div>
                 <div className="flex items-center p-2 border-b border-gray-700 mb-2">
                   <img
-                    src={activeCharacter.image}
+                    src={activeCharacter.image || activeCharacter.imageUrl || 'https://via.placeholder.com/128x128?text=No+Image'}
                     alt={activeCharacter.name}
                     className="w-10 h-10 rounded-full object-cover mr-3"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://via.placeholder.com/128x128?text=Image+Error';
+                    }}
                   />
                   <h4 className="font-semibold">{activeCharacter.name}</h4>
                 </div>
@@ -249,9 +264,13 @@ const Chat = ({
                       ) : (
                         <>
                           <img
-                            src={activeCharacter.image}
+                            src={activeCharacter.image || activeCharacter.imageUrl || 'https://via.placeholder.com/128x128?text=No+Image'}
                             alt={activeCharacter.name}
                             className="w-12 h-12 rounded-full object-cover mr-2 border border-purple-600 bg-gray-900 flex-shrink-0"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = 'https://via.placeholder.com/128x128?text=Image+Error';
+                            }}
                           />
                           <div>
                             {/* Inline edit mode for character message */}
@@ -323,9 +342,13 @@ const Chat = ({
                 {isTyping && pendingAI && pendingAI.thinking && (
                   <div className="flex items-start space-x-3">
                     <img
-                      src={activeCharacter.image}
+                      src={activeCharacter.image || activeCharacter.imageUrl || 'https://via.placeholder.com/128x128?text=No+Image'}
                       alt={activeCharacter.name}
                       className="w-12 h-12 rounded-full object-cover mr-2 border border-purple-600 bg-gray-900 flex-shrink-0"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://via.placeholder.com/128x128?text=Image+Error';
+                      }}
                     />
                     <div className="bg-gray-800 p-3 rounded-lg max-w-md flex items-center">
                       <span className="dots">
@@ -340,9 +363,13 @@ const Chat = ({
                 {pendingAI && !pendingAI.thinking && (
                   <div className="flex items-start space-x-3" ref={aiTypewriterRef}>
                     <img
-                      src={activeCharacter.image}
+                      src={activeCharacter.image || activeCharacter.imageUrl || 'https://via.placeholder.com/128x128?text=No+Image'}
                       alt={activeCharacter.name}
                       className="w-12 h-12 rounded-full object-cover mr-2 border border-purple-600 bg-gray-900 flex-shrink-0"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://via.placeholder.com/128x128?text=Image+Error';
+                      }}
                     />
                     <div className="bg-gray-700 p-3 rounded-lg max-w-md flex items-center">
                       <span className="typewriter">{pendingAI.text}</span>
