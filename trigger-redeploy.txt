@@ -1,1 +1,1 @@
-Fix API routing for character endpoints - Updated: July 18, 2025
+Fix setError undefined error in Chat component - Updated: July 18, 2025
