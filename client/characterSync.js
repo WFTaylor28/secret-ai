@@ -398,11 +398,12 @@ class CharacterSyncService {
           return { success: true, message: 'Character deleted successfully' };
         } catch (error) {
           console.error('Error deleting character from server:', error);
-          // We still return success since we deleted locally
+          // Return error details for debugging
           return { 
-            success: true, 
+            success: false, 
             message: 'Character deleted locally, but server deletion failed',
-            warning: 'Server deletion failed. Changes will sync when connection is restored.'
+            error: error.response?.data?.error || error.message,
+            status: error.response?.status
           };
         }
       }
@@ -446,11 +447,12 @@ class CharacterSyncService {
           return { success: true, message: 'Character updated successfully' };
         } catch (error) {
           console.error('Error updating character on server:', error);
-          // We still return success since we updated locally
+          // Return error details for debugging
           return { 
-            success: true, 
+            success: false, 
             message: 'Character updated locally, but server update failed',
-            warning: 'Server update failed. Changes will sync when connection is restored.'
+            error: error.response?.data?.error || error.message,
+            status: error.response?.status
           };
         }
       }

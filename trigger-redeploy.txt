@@ -1,0 +1,1 @@
+Fix API routing for character endpoints - Updated: July 18, 2025

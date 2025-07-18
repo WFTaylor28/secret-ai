@@ -1172,15 +1172,19 @@ ${character.name}: **I pause, gathering my thoughts.** _So much has happened alr
 
 // (Removed duplicate legacy code block)
 
+// API routes should be defined before the catch-all routes
+
 // Serve static files correctly in production
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.resolve(__dirname, "../client/build")));
-  app.get("*", (req, res) => {
+  // Only use the catch-all for non-API routes
+  app.get(/^(?!\/api\/).*/i, (req, res) => {
     res.sendFile(path.resolve(__dirname, "../client/build", "index.html"));
   });
 } else {
   // All other GET requests not handled before will go to React app (dev)
-  app.get("*", (req, res) =>
+  // Only use the catch-all for non-API routes
+  app.get(/^(?!\/api\/).*/i, (req, res) =>
     res.sendFile(path.resolve(__dirname, "../client", "index.html"))
   );
 }
