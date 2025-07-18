@@ -393,24 +393,40 @@ class CharacterSyncService {
   // Delete a character (both locally and on server if possible)
   async deleteCharacter(characterId) {
     try {
+      console.log('Deleting character with ID:', characterId);
       // First, remove from local storage
       this.removeLocalCharacter(characterId);
       
       // If the ID is a server ID (not a temporary one), delete from server
       if (characterId && typeof characterId === 'number' && characterId < 1000000) {
         try {
-          // Attempt to delete from server
-          await axios.delete(`/api/characters/${characterId}`);
+          console.log('Attempting to delete character from server:', characterId);
+          // Attempt to delete from server with explicit error handling
+          const response = await axios.delete(`/api/characters/${characterId}`);
+          console.log('Server response:', response);
           console.log('Character deleted from server successfully:', characterId);
           return { success: true, message: 'Character deleted successfully' };
         } catch (error) {
           console.error('Error deleting character from server:', error);
-          // Return error details for debugging
+          // Return detailed error information for debugging
+          let errorDetails = {
+            message: error.message || 'Unknown error',
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            url: `/api/characters/${characterId}`,
+            method: 'delete'
+          };
+          
+          if (error.response?.data) {
+            errorDetails.data = error.response.data;
+          }
+          
+          console.error('API Error:', errorDetails);
+          
           return { 
             success: false, 
             message: 'Character deleted locally, but server deletion failed',
-            error: error.response?.data?.error || error.message,
-            status: error.response?.status
+            error: errorDetails
           };
         }
       }
@@ -425,6 +441,7 @@ class CharacterSyncService {
   // Update a character (both locally and on server if possible)
   async updateCharacter(updatedCharacter) {
     try {
+      console.log('Updating character:', updatedCharacter.id);
       // First, update in local storage
       this.updateLocalCharacter(updatedCharacter);
       
@@ -448,18 +465,35 @@ class CharacterSyncService {
             tags: Array.isArray(updatedCharacter.tags) ? updatedCharacter.tags : [],
           };
           
+          console.log('Sending update to server for character:', updatedCharacter.id);
+          console.log('Payload:', payload);
+          
           // Update character on server
-          await axios.put(`/api/characters/${updatedCharacter.id}`, payload);
+          const response = await axios.put(`/api/characters/${updatedCharacter.id}`, payload);
+          console.log('Server response:', response);
           console.log('Character updated on server successfully:', updatedCharacter.id);
           return { success: true, message: 'Character updated successfully' };
         } catch (error) {
           console.error('Error updating character on server:', error);
-          // Return error details for debugging
+          // Return detailed error information for debugging
+          let errorDetails = {
+            message: error.message || 'Unknown error',
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            url: `/api/characters/${updatedCharacter.id}`,
+            method: 'put'
+          };
+          
+          if (error.response?.data) {
+            errorDetails.data = error.response.data;
+          }
+          
+          console.error('API Error:', errorDetails);
+          
           return { 
             success: false, 
             message: 'Character updated locally, but server update failed',
-            error: error.response?.data?.error || error.message,
-            status: error.response?.status
+            error: errorDetails
           };
         }
       }
