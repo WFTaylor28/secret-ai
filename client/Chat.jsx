@@ -1,18 +1,7 @@
 import React, { useEffect, useRef } from "react";
 // Helper to render chat message formatting (actions/expressions/thoughts)
 function renderFormattedMessage(text, isUser) {
-                  <div className="flex items-center p-2 border-b border-gray-700 mb-2">
-                  <img
-                    src={activeCharacter.image || activeCharacter.imageUrl || 'https://via.placeholder.com/128x128?text=No+Image'}
-                    alt={activeCharacter.name}
-                    className="w-10 h-10 rounded-full object-cover mr-3"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = 'https://via.placeholder.com/128x128?text=Image+Error';
-                    }}
-                  />
-                  <h4 className="font-semibold">{activeCharacter.name}</h4>
-                </div>tion* or **action** to <em>
+  // *action* or **action** to <em>
   // For user, use a different class for <em>
   // Robustly match both *action* and **action** (not followed by colon), hide asterisks
   // Handles overlapping and nested asterisks, and does not match inside words
