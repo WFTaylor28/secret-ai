@@ -139,9 +139,13 @@ const Chat = ({
                     style={{ boxSizing: 'border-box' }}
                   >
                     <img
-                      src={character.image}
+                      src={character.image || character.imageUrl || 'https://via.placeholder.com/128x128?text=No+Image'}
                       alt={character.name}
                       className="w-12 h-12 rounded-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://via.placeholder.com/128x128?text=Image+Error';
+                      }}
                     />
                     <div className="flex-1 min-w-0">
                       <h4 className="font-medium truncate">{character.name}</h4>

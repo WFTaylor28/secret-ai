@@ -1835,9 +1835,13 @@ const App = () => {
               style={{ maxWidth: '90vw', maxHeight: '70vh', overflowY: 'auto' }}
             >
               <img
-                src={profileCharacter.image}
+                src={profileCharacter.image || profileCharacter.imageUrl || 'https://via.placeholder.com/200x300?text=No+Image'}
                 alt={profileCharacter.name}
                 className="w-24 h-32 md:w-48 md:h-64 object-cover rounded-2xl border border-white/20 shadow-lg mb-2"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = 'https://via.placeholder.com/200x300?text=Image+Error';
+                }}
               />
               <div className="text-center">
                 <h2 className="text-xl md:text-2xl font-bold mb-2">{profileCharacter.name}</h2>

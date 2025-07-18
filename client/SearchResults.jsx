@@ -37,10 +37,14 @@ export default function SearchResults({ results, setActiveCharacter, openCharact
           >
             <div style={{ width: '100%', position: 'relative', height: '240px', overflow: 'hidden' }}>
               <img
-                src={character.image}
+                src={character.image || character.imageUrl || 'https://via.placeholder.com/200x240?text=No+Image'}
                 alt={character.name}
                 className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                 style={{ display: 'block', width: '100%', height: '100%' }}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = 'https://via.placeholder.com/200x240?text=Image+Error';
+                }}
               />
               {character.nsfw && (
                 <div className="absolute top-2 right-2 bg-red-600 text-xs font-bold px-2 py-1 rounded-full">

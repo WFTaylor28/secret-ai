@@ -124,6 +124,13 @@ class CharacterSyncService {
         }
       }
       
+      // Map server's imageUrl to client's image field
+      serverCharacters = serverCharacters.map(char => ({
+        ...char,
+        image: char.imageUrl || char.image || null
+      }));
+      console.log('Mapped image fields for', serverCharacters.length, 'characters');
+      
       // Merge with any locally created characters
       const localChars = this.getLocalCharacters();
       

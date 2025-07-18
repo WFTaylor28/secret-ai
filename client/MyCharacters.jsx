@@ -39,7 +39,15 @@ const MyCharacters = ({ user, createdCharacters = [], onEditCharacter, onDeleteC
           allMyCharacters.map((character) => (
             <div key={character.id} className="bg-gray-900 rounded-xl p-4 shadow-lg flex flex-col justify-between">
               <div className="flex items-center mb-4">
-                <img src={character.image} alt={character.name} className="w-32 h-40 rounded-xl object-cover mr-4" />
+                <img 
+                  src={character.image || character.imageUrl || 'https://via.placeholder.com/128x160?text=No+Image'} 
+                  alt={character.name} 
+                  className="w-32 h-40 rounded-xl object-cover mr-4" 
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = 'https://via.placeholder.com/128x160?text=Image+Error';
+                  }}
+                />
                 <div>
                   <h3 className="text-xl font-semibold mb-1">{character.name}</h3>
                   <p className="text-gray-400 text-sm line-clamp-2">{character.description}</p>
